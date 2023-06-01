@@ -3,7 +3,7 @@
 Welcome to the Shell Survival Guide! :shell: In this guide, we will explore the basic tools and commands that will
 empower you to navigate and utilize the Linux shell efficiently on our `Westworld` Lab Server. Whether you are new to the
 command line or looking to brush up your skills, this guide will equip you with the essential knowledge to streamline
-your machine learning experiments and research.
+your machine learning experiments and research. :rocket:
 
 ## Connecting to the Server
 
@@ -19,14 +19,16 @@ ssh <your_username>@<westworld_ip>
 
 Replace username with your assigned Linux user account on `Westworld`.
 
-Enter your password when prompted. Congratulations! You are now connected to the Westworld Lab Server and ready to
-unleash the power of the Linux shell.
+Enter your password when prompted. Congratulations! You are now connected to the `Westworld` Lab Server and ready to
+unleash the power of the Linux shell. 
+To log out of the server, simply run `exit`.
 
 ## Essential Commands
 
 ### Navigating the File System
 
 * `ls`: List files and directories in the current directory.
+* `ls -a`: List all files and directories, including hidden files.
 * `cd`: Change directory. Use `cd <directory>` to navigate to a specific directory or `cd ..` to go up one level.
 * `pwd`: Print the current working directory.
 * `clear`: Clear the terminal screen for a fresh start.
@@ -39,6 +41,8 @@ unleash the power of the Linux shell.
 * `cp <source> <destination>`: Copy files and directories.
 * `mkdir <dir_name>`: Create a new directory.
 * `touch <filename>`: Create a new file.
+* `cat <filename>`: Display the contents of a file.
+* `less <filename>`: Display the contents of a file one page at a time. Use the arrow keys to navigate and `q` to exit.
 
 ### Monitoring Resources
 
@@ -58,6 +62,11 @@ unleash the power of the Linux shell.
   ``` bash
   scp <your_username>@<westworld_ip>:/path/to/file/on/westworld /path/on/local/machine
   ```
+
+### Miscellaneous
+
+* `history`: Display a list of previously executed commands.
+* `history | grep <search_term>`: Search for a specific command in the history.
 
 ## Command Help and Documentation
 

@@ -130,7 +130,7 @@ docker image list | grep <your_surname>
 Lastly, if you want to remove one of your images, run:
 
 ```bash
-docker image rm <image_id>  # example: docker image rm 9a6d05b964cb
+docker rmi <image_id>  # example: docker rmi 9a6d05b964cb
 ```
 
 ## Running the Docker Image

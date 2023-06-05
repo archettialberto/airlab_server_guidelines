@@ -24,7 +24,8 @@ With being a `Westworld` user comes the **responsibility** :shield: to adhere to
 
 * **Resource Booking** :calendar: - To ensure fair resource allocation and effective sharing, :warning: **all cores and
   GPUs on the server must be booked in advance**. We have set up a resource
-  booking [Google Sheet](https://docs.google.com/spreadsheets/d/1n6HDbSX0Pe0zcRA0iBYDStrud7d_yRhBSrpFld4WNxs/edit#gid=1311829678).
+  booking [Google Sheet](https://docs.google.com/spreadsheets/d/1n6HDbSX0Pe0zcRA0iBYDStrud7d_yRhBSrpFld4WNxs/edit#gid=1311829678)
+  .
   Before running your experiments, make sure to check the availability of
   the required resources and book them accordingly.
 
@@ -33,3 +34,11 @@ With being a `Westworld` user comes the **responsibility** :shield: to adhere to
   provides a lightweight and isolated environment, ensuring consistency and reproducibility of your experiments. We have
   prepared a separate guide, which will walk you through the process of
   setting up and using Docker containers for your experiments.
+
+* **Clear Documentation** :page_facing_up: - :warning: **We expect all lab members to maintain clear and organized
+  documentation for
+  their projects**. This includes a `README.md` file with a brief description of the project, a Dockerfile for building the
+  Docker image, and a run configuration file for running the experiments. We have prepared a separate guide, which will
+  walk you through the process of setting up a project directory and creating the necessary files. Please, remember that
+  your scientific work may be used by other lab members in the future, so it is important to keep the code and
+  documentation clean and organized! :sparkles:

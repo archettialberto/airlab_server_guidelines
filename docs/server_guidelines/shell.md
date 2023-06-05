@@ -14,7 +14,7 @@ steps below to connect:
 2. Use the following command to connect to the server:
 
 ``` bash
-ssh <your_username>@<westworld_ip>
+ssh <your_surname>@<westworld_ip>
 ```
 
 Replace username with your assigned Linux user account on `Westworld`.
@@ -60,7 +60,7 @@ To log out of the server, simply run `exit`.
   a
   file from the server to your local machine:
   ``` bash
-  scp <your_username>@<westworld_ip>:/path/to/file/on/westworld /path/on/local/machine
+  scp <your_surname>@<westworld_ip>:/path/to/file/on/westworld /path/on/local/machine
   ```
 
 ### Miscellaneous

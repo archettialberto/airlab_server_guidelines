@@ -67,3 +67,61 @@ to split it horizontally.
 
 These are just a few of the many Tmux commands and features available. To explore more advanced functionalities and
 customization options, refer to the Tmux documentation. :book:
+
+## Example Configuration
+
+Here is an example of a Tmux session configuration to run your experiments smoothly while monitoring server resources.
+First, create a new Tmux session called `exps` :computer::
+``` bash
+tmux new -s exps
+```
+Then, split the window into two panes:
+``` bash
+Ctrl-b %
+```
+In the left pane, start a `htop` session to monitor server resources:
+``` bash
+htop
+```
+In the right pane, start a `watch nvidia-smi` session to monitor your GPU usage:
+``` bash
+watch nvidia-smi
+```
+Rename the window to `monitor`:
+``` bash
+Ctrl-b ,
+```
+
+Create a new window to run your experiments:
+``` bash
+Ctrl-b c
+```
+Rename the window to `exps`:
+``` bash
+Ctrl-b ,
+```
+In the new window, start your experiment:
+``` bash
+python main.py
+```
+
+Finally, create a new window for running commands and navigating the file system:
+``` bash
+Ctrl-b c
+```
+Rename the window to `shell`:
+``` bash
+Ctrl-b ,
+```
+
+At this point, you should have three windows: `monitor`, `exps`, and `shell`. You can navigate between them using
+
+* `Ctrl-b 0` for `monitor`
+* `Ctrl-b 1` for `exps`
+* `Ctrl-b 2` for `shell`
+
+To detach from the session, press `Ctrl-b` followed by `d`. You can now log out of the server and close your terminal. 
+When you log back in, you can reattach to the session using:
+``` bash
+tmux a -t exps
+```

@@ -1,23 +1,28 @@
-name: ci
+name: Deploy MkDocs
 
 on:
   push:
     branches:
-      - main
-    paths:
-      - "**.md"
-      - "mkdocs.yml"
-  workflow_dispatch:
+      - master
 
 jobs:
-  docs:
+  deploy:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v2
-        with:
-          fetch-depth: 2
-      - uses: actions/setup-python@v2
-      - run: pip install --upgrade pip && pip install mkdocs mkdocs-gen-files mkdocs-material
-      - run: git config --global user.name "Alberto Archetti" && git config --global user.email "alberto1.archetti@mail.polimi.it"
-      - name: Publish docs
-        run: mkdocs gh-deploy --force --clean
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install mkdocs-material
+
+    - name: Build and deploy
+      run: |
+        mkdocs gh-deploy --force

@@ -18,6 +18,6 @@ jobs:
           fetch-depth: 2
       - uses: actions/setup-python@v2
       - run: pip install --upgrade pip && pip install mkdocs mkdocs-gen-files mkdocs-material
-      - run: git config user.name 'github-actions[bot]' && git config user.email 'github-actions[bot]@users.noreply.github.com'
+      - run: git config --global user.name "Alberto Archetti" && git config --global user.email "alberto1.archetti@mail.polimi.it"
       - name: Publish docs
         run: mkdocs gh-deploy --force --clean

@@ -11,7 +11,7 @@ repo_name: AIRLab Guidelines
 nav:
   - Server Guidelines:
     - Welcome: server_guidelines/index.md
-    - Quickstart: server_guidelines/quickstart.md
+    # - Quickstart: server_guidelines/quickstart.md
     - Shell Survival Guide: server_guidelines/shell.md
     - Tmux Survival Guide: server_guidelines/tmux.md
     - Docker Survival Guide: server_guidelines/docker.md

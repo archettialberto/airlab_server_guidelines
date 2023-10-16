@@ -80,7 +80,7 @@ experiment. Each package should be on a separate line, following the format `pac
 For example, your `requirements.txt` file might look like this:
 
 ```text
-torch==1.9.0
+torch==1.13.1
 tensorflow==2.6.0
 numpy==1.21.1
 scikit-learn==0.24.2
@@ -101,14 +101,14 @@ cd ~/<my_new_project>
 Run the following command to build the image:
 
 ```bash
-docker build -rm -t <your_surname>/<image_name>:<version> .
+docker build -t <your_surname>/<image_name>:<version> .
 ```
 
 For example, if your surname is `rossi`, the image name is `deep_learning_shenanigans`, and the version is `v1`, you can
 run:
 
 ```bash
-docker build -rm -t rossi/deep_learning_shenanigans:v1 .
+docker build -t rossi/deep_learning_shenanigans:v1 .
 ```
 
 This may take a few minutes to complete. Set back and relax :coffee:

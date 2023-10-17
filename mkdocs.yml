@@ -8,6 +8,10 @@ site_description: >-
 repo_url: https://github.com/archettialberto/airlab_server_guidelines
 repo_name: AIRLab Guidelines
 
+docs_dir: docs/
+repo_name: 'archettialberto/airlab_server_guidelines'
+repo_url: 'https://github.com/archettialberto/airlab_server_guidelines'
+
 nav:
   - Server Guidelines:
     - Welcome: server_guidelines/index.md

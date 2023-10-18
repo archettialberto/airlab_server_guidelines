@@ -1,7 +1,7 @@
 # Docker Survival Guide
 
 Welcome to the Docker Survival Guide! :whale: In this guide, we will walk you through the process of building Docker
-images on the `Westworld` Lab Server. Docker allows you to create reproducible and isolated environments, ensuring
+images on the AIRLab Servers. Docker allows you to create reproducible and isolated environments, ensuring
 consistent results across
 different systems. By following the steps below, you will be able to set up a Docker image with the necessary
 dependencies and a virtual environment to run your experiments seamlessly. :robot:
@@ -32,8 +32,15 @@ maintain a clean workspace. We recommend the following structure for your projec
 Open the Dockerfile with a text editor, and add the following content:
 
 ```dockerfile
-# Start with a base image
-FROM python:3.10
+# Start with a base Ubuntu image with CUDA and cuDNN pre-installed
+FROM nvidia/cuda:11.7.1-cudnn8-devel-ubuntu20.04
+
+# Install python3.10 and pip
+ENV DEBIAN_FRONTEND noninteractive
+RUN apt-get update && apt-get install -y \
+  build-essential ca-certificates python3.10 python3.10-dev python3.10-distutils git vim wget cmake python3-pip
+RUN ln -sv /usr/bin/python3.10 /usr/bin/python
+RUN ln -svf /usr/bin/python3.10 /usr/bin/python3
 
 # Install system dependencies
 RUN apt update && apt install -y \
@@ -51,39 +58,50 @@ ENV VIRTUAL_ENV=/opt/venv
 RUN python -m venv $VIRTUAL_ENV
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
+# Enable Jupyter (remove comments if needed)
+# RUN pip install jupyter tornado nbconvert
+# RUN mkdir -p /.local
+# RUN chmod -R 777 /.local
+
+# Enable OpenCV  (remove comment if needed)
+# RUN apt install -y libsm6 libxext6 libxrender-dev ffmpeg htop
+
 # Install Python dependencies
-COPY requirements.txt /tmp/requirements.txt
+ADD requirements.txt /tmp/requirements.txt
 RUN pip install -r /tmp/requirements.txt
+
+ENV SHELL /bin/bash
 
 CMD ["bash"]
 ```
 
-Please, note that the `FROM` command specifies the base image for your Docker image. In this case, we are using the
-`python:3.10` image, which is a lightweight Linux distribution with Python 3.10 installed. You may use a different base
-image, depending on your requirements. For example, if you need to use TensorFlow, we highly recommend using the
-`tensorflow/tensorflow:latest-gpu` image, which comes with CUDA and cuDNN pre-installed.
+Please, note that the `FROM` command specifies the base image for your Docker image. In this case, we are using an nvidia image with CUDA and cuDNN pre-installed (in order to properly access the GPUs). You may use a different base
+image, depending on your requirements. For example, if you need to use TensorFlow, you can use the `tensorflow/tensorflow:latest-gpu` image, which comes with also tensorflow pre-installed.
 
-In order to run Jupyter notebooks, you need to add the following lines to the Dockerfile before the `CMD` command:
-
+If you plan to run Jupyter notebooks or OpenCV, you can decomment the related lines.
+If you need to install further apt packages, you can do so adding the following line before installing the python dependencies:
 ```dockerfile
-# Enable Jupyter
-RUN pip install jupyter tornado nbconvert
-RUN mkdir -p /.local
-RUN chmod -R 777 /.local
+RUN apt install -y <apt packages>
 ```
 
 ### Requirements
 
-Inside the `requirements.txt` file, list all the Python packages and dependencies required for your deep learning
-experiment. Each package should be on a separate line, following the format `package_name==version`.
+Inside the `requirements.txt` file, list all the Python packages and dependencies required for your experiment. Each package should be on a separate line, following the format `package_name==version`. The version is optional but strongly recommended for future replicability.
 
-For example, your `requirements.txt` file might look like this:
+For example, if you work in PyTorch your `requirements.txt` file might look like this:
 
 ```text
+numpy==1.26.1
 torch==1.13.1
-tensorflow==2.6.0
-numpy==1.21.1
-scikit-learn==0.24.2
+scikit-learn == 1.3.0
+```
+
+while the same setup using Tensorflow would look like this:
+
+```text
+numpy==1.26.1
+tensorflow==2.14.0
+scikit-learn == 1.3.0
 ```
 
 Add all the necessary packages and their versions according to your experiment's requirements. If you are not sure
@@ -115,7 +133,7 @@ This may take a few minutes to complete. Set back and relax :coffee:
 
 ## Listing Docker Images
 
-To list all the Docker images on `Westworld`, run:
+To visualize all the Docker images on the server, run:
 
 ```bash
 docker image list
@@ -133,9 +151,11 @@ Lastly, if you want to remove one of your images, run:
 docker rmi <image_id>  # example: docker rmi 9a6d05b964cb
 ```
 
-## Running the Docker Image
+You can obtain the image_id using the command `docker image list` seen above.
 
-The `Westworld` Lab Server relies on a user-friendly script :nerd: to help you launch experiments with Docker.
+## Running a Docker Container
+
+The AIRLab Servers relies on a user-friendly script :nerd: to help you launch experiments with Docker.
 The script is called `run-docker`.
 Every time you execute a command using `run-docker`, the current folder will be
 mounted in the container file system under the `/exp` working directory. This means that you can access all the files
@@ -170,6 +190,8 @@ Among the useful Docker arguments, you can specify the following:
 * `-e` to **set environment variables**. Example: `-e PYTHONPATH=/exp` sets the environment variable `PYTHONPATH` to the
   project root `/exp` in the container.
 
+You can find all arguments [here](https://docs.docker.com/engine/reference/commandline/run/).
+
 ### Running the Docker Image
 
 To run the Docker image, navigate to the project folder and run:
@@ -178,14 +200,14 @@ To run the Docker image, navigate to the project folder and run:
 run-docker <gpu_id or ''> <cpu_id or ''> <your_command>
 ```
 
-For example, if you want to run the script `main.py` on GPU 0 using the cores 8 to 16, you can run:
+For example, if you want to run the script `main.py` on GPU 3 using the cores 8 to 16, you can run:
 
 ```text
-run-docker 0 8-16 python main.py
+run-docker 3 8-16 python main.py
 ```
 
-Lastly, if you do not want to use a GPU, write `''` instead of the GPU id. For example, if you want to run the script
-`main.py` on CPU 0 using the cores 8 to 16, you can run:
+Lastly, if you do not want to use a GPU, write `''` instead of the GPU ID. For example, if you want to run the script
+`main.py` only on CPU, using the CPU cores 8 to 16, you can run:
 
 ```text
 run-docker '' 8-16 python main.py
@@ -193,12 +215,20 @@ run-docker '' 8-16 python main.py
 
 ### Running Jupyter Notebooks
 
-If you want to run a Jupyter notebook on GPU 1 using the cores 0 to 7, you can run:
+If you want to run a Jupyter notebook, you should add `-p 8899:8888` to the `docker_args` option in your `.runconfigs`. This exposes port `8888` on the container to port `8899` on the host. 
+
+Then, you can run the container with the following command (e.g., on GPU 1 using the cores 0 to 7):
 
 ```text
 run-docker 1 0-7 jupyter notebook --ip=0.0.0.0 --no-browser
 ```
 
-Please, remind that you need to add `-p 8899:8888` to the `docker_args` in the `.runconfigs` file to expose port `8888`
-from the container to port `8899` on the host. In this way, you can access the Jupyter notebook from your browser at
-`http://<westworld-ip-address>:8899/?token=...`. You can find the `token` in the output of the `run-docker` command.
+Now, you can access the Jupyter notebook from your browser at `http://<server-ip-address>:8899/?token=...`. You can find the `token` in the output of the `run-docker` command.
+
+## Extending your Docker Image
+This guide helped you set up a simple Docker image, which is already enough in most situations.
+
+Should you need further customization, you can check out the following repo with a more complete Docker template: [https://github.com/PCudrano/docker_template](https://github.com/PCudrano/docker_template)
+
+You'll find that this image sets up a user with your same privileges in your docker container. This is needed if you need to access shared folders on the servers (e.g., shared datasets).
+Additionally, this image allows you to specify further apt packages you require through a specific file `apt_requirement.txt`, so that you ideally will never need to modify the Dockerfile directly.

@@ -15,7 +15,7 @@ nav:
     - Shell Survival Guide: server_guidelines/shell.md
     - Tmux Survival Guide: server_guidelines/tmux.md
     - Docker Survival Guide: server_guidelines/docker.md
-
+    - Additional info: server_guidelines/additional.md
   - Thesis Guidelines:
     - How to Write a Thesis: thesis_guidelines/index.md
 

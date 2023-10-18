@@ -22,7 +22,7 @@ With being an AIRLab Servers user comes the **responsibility** :shield: to adher
   run `ncdu -x ~`.
 
 * **Resource Booking** :calendar: - To ensure fair resource allocation and effective sharing, :warning: **all cores and
-  GPUs on the server must be booked in advance**. Please ask your co-supervisor for the links!
+  GPUs on the server must be booked in advance**. <ins>Please ask your co-supervisor for the links!</ins>
   Before running your experiments, make sure to check the availability of the required resources and book them accordingly. Remember to book also the CPU cores you will require.
 
 * **Containerized Experiments** :whale: - It is mandatory to :warning: **run your code inside Docker

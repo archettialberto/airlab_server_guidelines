@@ -1,9 +1,8 @@
 # Tmux Survival Guide
 
 Welcome to the Tmux Survival Guide! :tv: In this guide, you will learn how to leverage the power of Tmux to create
-persistent
-sessions on the `Westworld` Lab Server. Tmux is a terminal multiplexer that allows you to manage multiple sessions and
-windows within a single terminal, enabling you to keep your code running even when you log out of the server. 
+persistent sessions on the AIRLab Servers. 
+Tmux is a terminal multiplexer that allows you to manage multiple sessions and windows within a single terminal, enabling you to keep your code running even when you log out of the server. 
 A quick reference of essential Tmux commands is available [here](https://tmuxcheatsheet.com/).
 Let's dive in! :rocket:
 
@@ -11,7 +10,7 @@ Let's dive in! :rocket:
 
 To start using Tmux, follow these steps:
 
-1. Connect to the Westworld Lab Server using SSH as you did previously.
+1. Connect to an AIRLab Server using SSH as you did previously.
 2. Once connected, enter the following command to start a new Tmux session:
 ``` bash
 tmux new -s <session_name>

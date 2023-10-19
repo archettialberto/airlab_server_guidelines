@@ -1,14 +1,15 @@
 # Shell Survival Guide
 
 Welcome to the Shell Survival Guide! :shell: In this guide, we will explore the basic tools and commands that will
-empower you to navigate and utilize the Linux shell efficiently on our `Westworld` Lab Server. Whether you are new to the
-command line or looking to brush up your skills, this guide will equip you with the essential knowledge to streamline
-your machine learning experiments and research. :rocket:
+empower you to navigate and utilize the Linux shell efficiently on our AIRLab Servers. Whether you are new to the
+command line or looking to brush up your skills, this guide will equip you with the essential knowledge to streamline your machine learning experiments and research. :rocket:
+
+The rest of this guide focuses on our `Westworld` server, but all other servers can be used in the same exact fashion.
 
 ## Connecting to the Server
 
-To begin, you need to establish a secure connection to the `Westworld` Lab Server using SSH (Secure Shell). Follow the
-steps below to connect:
+To begin, you need to establish a secure connection to `Westworld` using SSH (Secure Shell).
+Follow the steps below to connect:
 
 1. Open your preferred terminal application.
 2. Use the following command to connect to the server:

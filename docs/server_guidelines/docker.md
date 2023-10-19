@@ -31,7 +31,7 @@ maintain a clean workspace. We recommend the following structure for your projec
 
 Open the Dockerfile with a text editor, and add the following content:
 
-```dockerfile
+```dockerfile linenums="1"
 # Start with a base Ubuntu image with CUDA and cuDNN pre-installed
 FROM nvidia/cuda:11.7.1-cudnn8-devel-ubuntu20.04
 
@@ -64,7 +64,7 @@ ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 # RUN chmod -R 777 /.local
 
 # Enable OpenCV  (remove comment if needed)
-# RUN apt install -y libsm6 libxext6 libxrender-dev ffmpeg htop
+# RUN apt install -y libsm6 libxext6 libxrender-dev ffmpeg
 
 # Install Python dependencies
 ADD requirements.txt /tmp/requirements.txt
@@ -75,20 +75,21 @@ ENV SHELL /bin/bash
 CMD ["bash"]
 ```
 
-Please, note that the `FROM` command specifies the base image for your Docker image. In this case, we are using an nvidia image with CUDA and cuDNN pre-installed (in order to properly access the GPUs). You may use a different base
-image, depending on your requirements. For example, if you need to use TensorFlow, you can use the `tensorflow/tensorflow:latest-gpu` image, which comes with also tensorflow pre-installed.
+The `FROM` command specifies the base image for your Docker image. In this case, we are using an Nvidia image with CUDA and cuDNN pre-installed (in order to properly access the GPUs). You may use a different base
+image, depending on your requirements. For example, if you need to use TensorFlow, you can use the `tensorflow/tensorflow:latest-gpu` image, which comes also with the latest version of tensorflow pre-installed.
 
 If you plan to run Jupyter notebooks or OpenCV, you can decomment the related lines.
-If you need to install further apt packages, you can do so adding the following line before installing the python dependencies:
+
+If you need to install further apt packages, you can do so adding the following command before line `35`:
 ```dockerfile
 RUN apt install -y <apt packages>
 ```
 
 ### Requirements
 
-Inside the `requirements.txt` file, list all the Python packages and dependencies required for your experiment. Each package should be on a separate line, following the format `package_name==version`. The version is optional but strongly recommended for future replicability.
+Inside the `requirements.txt` file, list all the Python packages and dependencies required for your experiment. Each package should be on a separate line, following the format `package_name==version`. The version is optional but <ins>strongly recommended</ins> for future replicability.
 
-For example, if you work in PyTorch your `requirements.txt` file might look like this:
+If you work with PyTorch, your `requirements.txt` file might look like this:
 
 ```text
 numpy==1.26.1
@@ -96,7 +97,7 @@ torch==1.13.1
 scikit-learn == 1.3.0
 ```
 
-while the same setup using Tensorflow would look like this:
+The same setup using Tensorflow would look like this:
 
 ```text
 numpy==1.26.1
@@ -104,8 +105,8 @@ tensorflow==2.14.0
 scikit-learn == 1.3.0
 ```
 
-Add all the necessary packages and their versions according to your experiment's requirements. If you are not sure
-which packages you need, you can rely on [pipreqs](https://github.com/bndr/pipreqs).
+Add all the necessary packages and their versions according to your experiment's requirements. 
+If you are not sure which packages you need, you can rely on [pipreqs](https://github.com/bndr/pipreqs).
 
 ## Building the Docker Image
 
@@ -155,7 +156,7 @@ You can obtain the image_id using the command `docker image list` seen above.
 
 ## Running a Docker Container
 
-The AIRLab Servers relies on a user-friendly script :nerd: to help you launch experiments with Docker.
+The AIRLab Servers rely on a user-friendly script :nerd: to help you launch experiments with Docker.
 The script is called `run-docker`.
 Every time you execute a command using `run-docker`, the current folder will be
 mounted in the container file system under the `/exp` working directory. This means that you can access all the files

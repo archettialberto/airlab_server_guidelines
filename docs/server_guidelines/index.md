@@ -1,4 +1,4 @@
-# Welcome
+# Server Guidelines
 
 Welcome to the AIRLab Servers documentation! :books: This comprehensive guide will provide you with all the
 information you need to effectively utilize our server for your research experiments. By following

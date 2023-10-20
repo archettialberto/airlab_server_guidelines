@@ -1,4 +1,4 @@
-# MSc Thesis Guide
+# Thesis Guidelines
 
 Welcome to the MSc Thesis Guide for students at the AIRLab. Please follow the resources provided
 below to ensure your thesis meets the required standards. :robot:

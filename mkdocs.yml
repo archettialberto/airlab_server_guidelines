@@ -5,12 +5,12 @@ site_author: Alberto Archetti
 site_description: >-
     AIRLab Guidelines
 
-repo_url: https://github.com/archettialberto/airlab_server_guidelines
-repo_name: AIRLab Guidelines
+#repo_url: https://github.com/archettialberto/airlab_server_guidelines
+#repo_name: AIRLab Guidelines
 
 docs_dir: docs/
-repo_name: 'archettialberto/airlab_server_guidelines'
-repo_url: 'https://github.com/archettialberto/airlab_server_guidelines'
+#repo_name: 'archettialberto/airlab_server_guidelines'
+#repo_url: 'https://github.com/archettialberto/airlab_server_guidelines'
 
 nav:
   - Server Guidelines:
@@ -70,10 +70,10 @@ plugins:
       separator: '[\s\-,:!=\[\]()"`/]+|\.(?!\d)|&[lg]t;|(?!\b)(?=[A-Z][a-z])'
 
 # Customization
-extra:
-  social:
-    - icon: fontawesome/brands/github
-      link: https://github.com/archettialberto/airlab_server_guidelines
+# extra:
+#   social:
+#     - icon: fontawesome/brands/github
+#       link: https://github.com/archettialberto/airlab_server_guidelines
 
 markdown_extensions:
   - abbr

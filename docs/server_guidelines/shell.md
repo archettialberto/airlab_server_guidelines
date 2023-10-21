@@ -54,6 +54,7 @@ To log out of the server, simply run `exit`.
 ### Text Editing
 
 * `nano`: A simple text editor to create and edit files directly in the terminal. Use `nano <filename>` to open a file.
+* `vim`: A less simple (but more fun?) text editor. Use `vim <filename>` to open a file. You can find a tutorial [here](https://missing.csail.mit.edu/2020/editors/). (If you just ran it without reading the tutorial and don't know how to quit it, type `:q` :wink:)
 
 ### File Transfer
 
@@ -79,3 +80,59 @@ documentation. Here are a few ways to access it:
 
 Remember, practice makes perfect! The more you use the Linux shell, the more comfortable you will become with these
 commands and tools. If you have any questions or need additional help, please reach out to the lab members.
+
+## Code Management and Git
+
+Git is a version control system, i.e., a tool used to track changes to your source code over time. It is crucial that you use Git for your research, starting from the very beginning of your thesis. 
+
+You can host your git repository on [GitHub](https://github.com/), the most famous repository hosting platform. As a student, you can benefit from the [GitHub Student Developer Pack](https://education.github.com/pack) and obtain a Pro license for free. The Pro license allows you to create a private repository. 
+You should set up a private repository as soon as possible, and add your co-supervisors to it as member.
+
+### Git Guides
+
+If you don't know how to use git, you should familiarize yourself with it.
+
+You can check out this course to learn the basics:<br>
+
+- [MIT course - Version Control (Git)](https://missing.csail.mit.edu/2020/version-control/)
+
+Here is a comprehensive guide from the official Git project:<br>
+
+- [Pro Git book](https://git-scm.com/book/en/v2)
+
+Finally, Atlassian (competitor of GitHub) has also a series of very nice tutorials on Git:
+
+- [Atlassian Tutorials - Main page](https://www.atlassian.com/git/tutorials)
+
+- [Atlassian Tutorials - Advanced topics](https://www.atlassian.com/git/tutorials/advanced-overview)
+
+- [Atlassian Tutorials - Git workflows (for the future; probably not needed for your thesis)](https://www.atlassian.com/git/tutorials/comparing-workflows)
+
+### Coding Etiquette
+
+All your code should be tracked in your git repository that we will provide.
+
+It is suggested to have a `main` branch and a `dev` branch for each of your new implementation/refactoring.
+
+Unless otherwise instructed, we encourage you to use notebooks only for visualization.
+
+It goes by itself, you should always comment your code.
+
+You should follow PEP8, Flake rules for writing python code and make it readable.
+
+- [How to Write Beautiful Python Code With PEP 8 – Real Python](https://realpython.com/python-pep8/)
+
+## Advanced topics
+
+### Further resources
+
+You can find more details on how to use the shell and how to approach any computer science project in this very good MIT course: 
+
+- [The Missing Semester of Your CS Education](https://missing.csail.mit.edu/).
+
+### Home setup
+When working on a shell system, you would typically set your home folder with all the necessary dotfiles once and for all. We suggest maintaining a repo of all your dotfiles for restoring your configs in the future. (Just be careful to keep the repo private in case you include sensitive information!)
+
+If you want, you can start from the following vim/bash/tmux environment with all the necessary dotfiles already set up:
+
+- [Paolo Cudrano - Home (bash)](https://github.com/PCudrano/bash_home)

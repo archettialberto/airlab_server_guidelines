@@ -17,7 +17,7 @@ nav:
     - Welcome: server_guidelines/index.md
     - Shell Survival Guide: server_guidelines/shell.md
     - Tmux Survival Guide: server_guidelines/tmux.md
-    - Coding Guide: server_guidelines/code_management.md
+    - Coding Survival Guide: server_guidelines/coding.md
     - Docker Survival Guide: server_guidelines/docker.md
     - Additional info: server_guidelines/additional.md
   - Thesis Guidelines:

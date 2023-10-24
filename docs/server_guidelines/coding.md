@@ -1,4 +1,4 @@
-Welcome to the Coding Guide! :computer: 
+Welcome to the Coding Survival Guide! :computer: 
 This guide is your key to becoming a respected coder and steering clear of those pesky coding headaches.
 
 During your thesis, you're going to write a substantial amount of code, and keeping it organized is crucial. Your code has a future beyond your initial writing. Others (and your future self) will need to understand what you've crafted. We're here to ensure that your code tells a good story :book:, not a mystery novel :detective:.

@@ -25,6 +25,8 @@ maintain a clean workspace. We recommend the following structure for your projec
 └── ...
 ```
 
+A project folder will typically correspond to a git repository.
+
 ## Docker Image Definition
 
 ### Dockerfile

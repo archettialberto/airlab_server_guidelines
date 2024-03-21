@@ -23,7 +23,7 @@ thesis: [Download the LaTeX Template](https://www.ingindinf.polimi.it/fileadmin/
 ## Presentation PPT Template
 
 When you're ready to present your work, utilize our lab's PPT template for the
-presentation: [Download the PPT Template](https://airlab.deib.polimi.it/wp-content/uploads/2021/11/ThesisPresentation.ppt.zip)
+presentation: [Download the PPT Template](https://polimi365-my.sharepoint.com/:f:/g/personal/10306579_polimi_it/Eu7UoRKAz-pHmHKuXXwdFd8Bn4JVyBfeYbMOm3uIGg4pkg?e=zLNdnj)
 
 ---
 

@@ -122,14 +122,14 @@ cd ~/<my_new_project>
 Run the following command to build the image:
 
 ```bash
-docker build -t <your_surname>/<image_name>:<version> .
+docker build --rm -t <your_surname>/<image_name>:<version> .
 ```
 
 For example, if your surname is `rossi`, the image name is `deep_learning_shenanigans`, and the version is `v1`, you can
 run:
 
 ```bash
-docker build -t rossi/deep_learning_shenanigans:v1 .
+docker build --rm -t rossi/deep_learning_shenanigans:v1 .
 ```
 
 This may take a few minutes to complete. Set back and relax :coffee:

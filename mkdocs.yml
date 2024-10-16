@@ -14,14 +14,15 @@ docs_dir: docs/
 
 nav:
   - Server Guidelines:
-    - Welcome: server_guidelines/index.md
+    - Welcome: server_guidelines/welcome.md
     - Shell Survival Guide: server_guidelines/shell.md
     - Tmux Survival Guide: server_guidelines/tmux.md
     - Coding Survival Guide: server_guidelines/coding.md
     - Docker Survival Guide: server_guidelines/docker.md
     - Additional info: server_guidelines/additional.md
   - Thesis Guidelines:
-    - How to Write a Thesis: thesis_guidelines/index.md
+    - How to Conduct Research: thesis_guidelines/research.md
+    - How to Write a Thesis: thesis_guidelines/writing.md
 
 theme:
   name: material

@@ -1,17 +1,16 @@
 # How to Conduct Research for Your Thesis
 
-As a new thesis student, effectively disseminating your research is crucial. 
-Understanding the various platforms—workshops, conferences, and journals—will enhance the visibility 
-and credibility of your work. This guide outlines the types of publications, strategies for finding 
-and evaluating research articles, and a recommended publication pathway to help you navigate your thesis journey.
+As a new thesis student, effectively searching research articles is crucial.
+Understanding the various publication venues (workshops, conferences, and journals) will enhance the quality of your source material. 
+This guide outlines the types of publications, the strategies for finding research articles, and a recommended publication pathway to help you navigate your thesis journey.
 
 ## Publication Venues
 
 Different publication venues serve distinct purposes and stages of research. Here's a breakdown:
 
-* **Workshops**: Informal gatherings focused on specific topics, ideal for early-stage research and obtaining feedback.
-* **Conferences**: Formal events with rigorous peer review, suitable for presenting mature research with significant contributions.
-* **Journals**: Periodical publications that showcase thoroughly vetted and comprehensive studies, often with high impact.
+* :hammer: **Workshops**: Informal gatherings focused on specific topics, ideal for early-stage research and obtaining feedback.
+* :speaker: **Conferences**: Formal events with rigorous peer review, suitable for presenting mature research with significant contributions.
+* :newspaper: **Journals**: Periodical publications that showcase thoroughly vetted and comprehensive studies, often with high impact.
 
 ## Types of Publications
 
@@ -19,6 +18,7 @@ These are the most common types of publications you may encounter or consider fo
 
 * **Position Papers**: Short statements expressing your viewpoint on specific issues, facilitating early discussions.
 * **Poster Presentations**: Visual summaries of preliminary work, suitable for engaging with peers and receiving feedback.
+* **Preprint Papers**: Early versions of research articles shared before formal peer review, often on platforms like [arXiv](https://arxiv.org/).
 * **Short Papers**: Concise reports on specific concepts or findings, maintaining the same standards as full papers but with limited scope.
 * **Full Papers**: Comprehensive studies presenting significant research contributions, typically with stringent acceptance criteria.
 * **Survey Papers**: Comprehensive reviews of existing literature, summarizing key findings and identifying research gaps.
@@ -29,10 +29,15 @@ Begin by identifying key topics and research questions. Use appropriate keywords
 
 ### Research Databases
 
-* [Google Scholar](https://scholar.google.com/): Specialized search engine for academic articles and publications.
-* [arXiv](https://arxiv.org/): A preprint server for physics, mathematics, computer science, and other disciplines.
-* [PubMed](https://pubmed.ncbi.nlm.nih.gov/): A repository of biomedical and life sciences literature.
-* [Scopus](https://www.scopus.com/search/form.uri?display=advanced): A comprehensive research database with a query-based search engine for journal articles (_requires PoliMI account_).
+  * [Google Scholar](https://scholar.google.com/): Specialized search engine for academic articles and publications.
+  * [arXiv](https://arxiv.org/): A preprint server for physics, mathematics, computer science, and other disciplines.
+  * [PubMed](https://pubmed.ncbi.nlm.nih.gov/): A repository of biomedical and life sciences literature.
+  * [Scopus](https://www.scopus.com/search/form.uri?display=advanced): A comprehensive research database with a query-based search engine for journal articles (_requires PoliMI account_).
+
+### Venue Quality Collections
+
+  * [GGS Conference Rating](https://scie.lcc.uma.es/): Provides a comprehensive list of computer science conferences and their rankings.
+  * [Scimago Journal & Country Rank](https://www.scimagojr.com/): Provides journal rankings based on Scopus data.
 
 ## Evaluating Research Articles
 

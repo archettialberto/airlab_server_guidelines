@@ -30,7 +30,6 @@ theme:
   icon:
     repo: fontawesome/brands/github
   palette:
-
     # Palette toggle for light mode
     - media: "(prefers-color-scheme: light)"
       primary: indigo
@@ -39,7 +38,6 @@ theme:
       toggle:
         icon: material/brightness-7
         name: Switch to dark mode
-
     # Palette toggle for dark mode
     - media: "(prefers-color-scheme: dark)"
       primary: indigo

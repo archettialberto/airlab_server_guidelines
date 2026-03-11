@@ -1,0 +1,289 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+import CodeBlock from '../../components/CodeBlock.astro';
+
+const toc = [
+  { label: 'Why Docker?',          id: 'why' },
+  { label: 'Project Structure',    id: 'structure' },
+  { label: 'Writing a Dockerfile', id: 'dockerfile' },
+  { label: 'Building Images',      id: 'building' },
+  { label: 'Running Containers',   id: 'running' },
+  { label: 'Run Configurations',   id: 'runconfigs' },
+  { label: 'Jupyter Notebooks',    id: 'jupyter' },
+  { label: 'Best Practices',       id: 'best-practices' },
+];
+---
+
+<DocsLayout title="Docker & Experiments" toc={toc}>
+
+  <h1>Docker & Experiments</h1>
+
+  <p>
+    Docker is mandatory for all experiments on AIRLab servers. It is not optional, and
+    it is not just for production code. Running experiments inside containers ensures
+    that every result is reproducible — by you six months from now, by your co-supervisor,
+    and by any future lab member who builds on your work.
+  </p>
+
+  <!-- ── Why Docker ─────────────────────────────────────────────────────────── -->
+  <h2 id="why">Why Docker?</h2>
+
+  <p>
+    Without containers, every researcher installs packages globally with <code>pip</code>
+    or <code>conda</code>. Over time, incompatible versions accumulate, experiments break,
+    and nobody can tell which version of a library produced which result. Docker fixes this:
+  </p>
+
+  <ul>
+    <li><strong>Isolation</strong> — your dependencies cannot interfere with anyone else's, and vice versa.</li>
+    <li><strong>Reproducibility</strong> — pin every dependency to an exact version; anyone can rebuild the same environment from scratch.</li>
+    <li><strong>Portability</strong> — the same container runs on Westworld, a cloud VM, or your laptop (CPU-only).</li>
+    <li><strong>Clean servers</strong> — no global package pollution; the server OS stays pristine.</li>
+  </ul>
+
+  <!-- ── Project Structure ──────────────────────────────────────────────────── -->
+  <h2 id="structure">Project Structure</h2>
+
+  <p>
+    Every project should follow this layout. It makes your repository self-contained —
+    anyone who clones it can build the environment and run the code without asking you
+    anything.
+  </p>
+
+  <CodeBlock
+    lang="text"
+    filename="my_project/"
+    code={`my_project/
+├── src/                   # your source code
+│   ├── train.py
+│   ├── evaluate.py
+│   └── models/
+├── configs/               # YAML/JSON configuration files
+│   └── default.yaml
+├── Dockerfile             # image definition
+├── requirements.txt       # Python dependencies (pinned versions)
+├── .runconfig             # dataset mounts, GPU allocation, env vars
+├── .gitignore
+└── README.md              # setup & usage instructions`}
+  />
+
+  <!-- ── Dockerfile ─────────────────────────────────────────────────────────── -->
+  <h2 id="dockerfile">Writing a Dockerfile</h2>
+
+  <p>
+    Start from an official NVIDIA base image that bundles CUDA and cuDNN. Pick the
+    version that matches the CUDA toolkit installed on Westworld (ask your co-supervisor
+    or run <code>nvidia-smi</code> and check the top-right CUDA version).
+  </p>
+
+  <CodeBlock
+    lang="dockerfile"
+    filename="Dockerfile"
+    code={`# ── Base image ────────────────────────────────────────────
+# Replace with the CUDA version that matches Westworld.
+# Browse available tags at: https://hub.docker.com/r/nvidia/cuda/tags
+FROM nvidia/cuda:12.1.0-cudnn8-runtime-ubuntu22.04
+
+# ── System dependencies ───────────────────────────────────
+# Install only what is truly needed; keep layers small.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      python3.11 \
+      python3.11-venv \
+      python3-pip \
+      git \
+      libgl1 \
+      libglib2.0-0 \
+    && rm -rf /var/lib/apt/lists/*
+
+# ── Python environment ────────────────────────────────────
+WORKDIR /workspace
+COPY requirements.txt .
+
+RUN pip install --no-cache-dir --upgrade pip \
+    && pip install --no-cache-dir -r requirements.txt
+
+# ── Project code ──────────────────────────────────────────
+COPY src/ ./src/
+COPY configs/ ./configs/
+
+# Default command (override at runtime)
+CMD ["python3", "src/train.py"]`}
+  />
+
+  <p>
+    Pin every dependency to an exact version in <code>requirements.txt</code>. Use
+    <code>pip freeze</code> in a working environment to generate the list, or specify
+    versions manually:
+  </p>
+
+  <CodeBlock
+    lang="text"
+    filename="requirements.txt"
+    code={`torch==2.2.1+cu121
+torchvision==0.17.1+cu121
+torchaudio==2.2.1+cu121
+--extra-index-url https://download.pytorch.org/whl/cu121
+
+numpy==1.26.4
+opencv-python-headless==4.9.0.80
+matplotlib==3.8.4
+tqdm==4.66.2
+pyyaml==6.0.1
+tensorboard==2.16.2`}
+  />
+
+  <!-- ── Building ───────────────────────────────────────────────────────────── -->
+  <h2 id="building">Building Images</h2>
+
+  <CodeBlock
+    lang="bash"
+    filename="westworld — project root"
+    code={`# Build the image. Convention: <username>/<project>:<version>
+docker build --rm -t lastname/my_project:v1 .
+
+# Verify the image was built
+docker images | grep my_project
+
+# Remove dangling images (untagged build cache)
+docker image prune`}
+  />
+
+  <p>
+    The <code>--rm</code> flag removes intermediate containers after the build completes,
+    keeping the server tidy. Rebuild after any change to your <code>Dockerfile</code> or
+    <code>requirements.txt</code>.
+  </p>
+
+  <!-- ── Running ────────────────────────────────────────────────────────────── -->
+  <h2 id="running">Running Containers</h2>
+
+  <p>
+    AIRLab servers provide a helper script called <code>run-docker</code> that wraps
+    the standard <code>docker run</code> command with sensible defaults (GPU assignment,
+    current-directory mount, user permissions). Ask your co-supervisor how to obtain it.
+  </p>
+
+  <CodeBlock
+    lang="bash"
+    filename="westworld"
+    code={`# Usage: run-docker <gpu_indices> <cpu_cores> <command...>
+# Example: use GPU 0, 4 CPU cores, run training
+run-docker 0 4 python3 src/train.py --config configs/default.yaml
+
+# Use two GPUs (0 and 1), 8 cores
+run-docker 0,1 8 python3 src/train_multi_gpu.py
+
+# Start an interactive bash shell inside the container (useful for debugging)
+run-docker 0 4 bash`}
+  />
+
+  <p>
+    If <code>run-docker</code> is not yet available, here is the equivalent raw Docker command:
+  </p>
+
+  <CodeBlock
+    lang="bash"
+    code={`docker run --rm --gpus '"device=0"' \
+  --cpuset-cpus="0-3" \
+  -v "$(pwd)":/workspace \
+  -w /workspace \
+  --user "$(id -u):$(id -g)" \
+  lastname/my_project:v1 \
+  python3 src/train.py`}
+  />
+
+  <!-- ── Run Configs ─────────────────────────────────────────────────────────── -->
+  <h2 id="runconfigs">Run Configurations (.runconfig)</h2>
+
+  <p>
+    The <code>.runconfig</code> file lets you declare persistent options for
+    <code>run-docker</code> without repeating them on the command line every time.
+    Common uses: mounting dataset directories, exposing ports, and setting environment
+    variables.
+  </p>
+
+  <CodeBlock
+    lang="bash"
+    filename=".runconfig"
+    code={`# Mount your private dataset directory into the container
+-v ~/datasets/private/coco:/data/coco:ro
+
+# Mount a shared lab dataset (read-only)
+-v /data/shared/imagenet:/data/imagenet:ro
+
+# Expose a port (e.g., for TensorBoard)
+-p 6006:6006
+
+# Set environment variables
+-e WANDB_API_KEY=your_key_here
+-e PYTHONPATH=/workspace/src`}
+  />
+
+  <!-- ── Jupyter ─────────────────────────────────────────────────────────────── -->
+  <h2 id="jupyter">Jupyter Notebooks</h2>
+
+  <p>
+    Notebooks are useful for exploration and visualisation, but should not contain
+    core training logic (see the <a href="/docs/git#notebooks">Git guide</a> for why).
+    To run a Jupyter server inside a container:
+  </p>
+
+  <CodeBlock
+    lang="bash"
+    filename="westworld"
+    code={`# Start Jupyter inside the container, exposed on port 8888
+run-docker 0 4 jupyter notebook --ip=0.0.0.0 --port=8888 --no-browser`}
+  />
+
+  <p>
+    Then, on your local machine, forward the port through SSH to access the notebook
+    in your browser:
+  </p>
+
+  <CodeBlock
+    lang="bash"
+    filename="local machine"
+    code={`# Forward remote port 8888 to your local port 8888
+ssh -L 8888:localhost:8888 airlab
+
+# Open in your browser:
+# http://localhost:8888
+# (copy the token from the Jupyter output on the server)`}
+  />
+
+  <!-- ── Best Practices ────────────────────────────────────────────────────────── -->
+  <h2 id="best-practices">Best Practices</h2>
+
+  <table>
+    <thead>
+      <tr><th>Do</th><th>Don't</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Pin all dependency versions in <code>requirements.txt</code></td>
+        <td>Use <code>pip install torch</code> (no version pin)</td>
+      </tr>
+      <tr>
+        <td>Use <code>--no-cache-dir</code> in <code>pip install</code></td>
+        <td>Let pip cache accumulate inside the image layer</td>
+      </tr>
+      <tr>
+        <td>Chain <code>RUN</code> commands with <code>&amp;&amp;</code> to reduce layers</td>
+        <td>Create a separate <code>RUN</code> for each <code>apt-get install</code></td>
+      </tr>
+      <tr>
+        <td>Tag images with meaningful version strings (<code>:v2</code>, <code>:exp-aug24</code>)</td>
+        <td>Always use <code>:latest</code></td>
+      </tr>
+      <tr>
+        <td>Mount datasets from outside the container (<code>-v</code>)</td>
+        <td>Copy large datasets into the image with <code>COPY</code></td>
+      </tr>
+      <tr>
+        <td>Run <code>docker image prune</code> periodically</td>
+        <td>Let stale images accumulate and fill the server disk</td>
+      </tr>
+    </tbody>
+  </table>
+
+</DocsLayout>

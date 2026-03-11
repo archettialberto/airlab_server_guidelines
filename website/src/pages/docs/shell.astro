@@ -1,0 +1,248 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+import CodeBlock from '../../components/CodeBlock.astro';
+
+const toc = [
+  { label: 'Connecting via SSH',   id: 'ssh' },
+  { label: 'SSH Keys',             id: 'ssh-keys' },
+  { label: 'Navigation & Files',   id: 'navigation' },
+  { label: 'Monitoring Resources', id: 'monitoring' },
+  { label: 'File Transfer',        id: 'transfer' },
+  { label: 'Getting Help',         id: 'help' },
+];
+---
+
+<DocsLayout title="Shell Essentials" toc={toc}>
+
+  <h1>Shell Essentials</h1>
+
+  <p>
+    The command line is your primary interface to the AIRLab servers. This guide covers
+    everything from connecting for the first time to monitoring GPU usage and moving files
+    around. If you are new to the Linux shell, work through this page before anything else.
+  </p>
+
+  <div class="callout callout-info">
+    <svg class="w-5 h-5 flex-shrink-0 mt-0.5 text-accent-500" fill="none" stroke="currentColor"
+         stroke-width="2" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/>
+      <line x1="12" y1="16" x2="12.01" y2="16"/>
+    </svg>
+    <p class="text-sm leading-relaxed">
+      <strong>Recommended reading:</strong> MIT's
+      <a href="https://missing.csail.mit.edu/" target="_blank" rel="noopener">The Missing Semester of Your CS Education</a>
+      is an excellent, free course covering the shell, editors, Git, and more.
+      It takes about a weekend to work through and will save you hours every week.
+    </p>
+  </div>
+
+  <!-- ── SSH ────────────────────────────────────────────────────────────────── -->
+  <h2 id="ssh">Connecting via SSH</h2>
+
+  <p>
+    SSH (Secure Shell) creates an encrypted connection to the remote server. Your
+    co-supervisor will give you the server's IP address (<code>WESTWORLD_IP</code>).
+  </p>
+
+  <CodeBlock
+    lang="bash"
+    filename="local machine"
+    code={`ssh firstname.lastname@WESTWORLD_IP`}
+  />
+
+  <p>
+    To avoid typing the IP and username every time, add an alias in your SSH client
+    configuration file:
+  </p>
+
+  <CodeBlock
+    lang="text"
+    filename="~/.ssh/config"
+    code={`Host airlab
+  HostName WESTWORLD_IP
+  User firstname.lastname
+  IdentityFile ~/.ssh/id_ed25519_airlab   # see SSH Keys below
+  ServerAliveInterval 60
+  ServerAliveCountMax 3`}
+  />
+
+  <p>
+    With this in place, you connect with just:
+  </p>
+
+  <CodeBlock lang="bash" filename="local machine" code={`ssh airlab`} />
+
+  <!-- ── SSH Keys ────────────────────────────────────────────────────────────── -->
+  <h2 id="ssh-keys">SSH Keys</h2>
+
+  <p>
+    Password authentication is convenient but weaker than key-based authentication.
+    Set up an SSH key pair once and never type your password over the network again.
+  </p>
+
+  <CodeBlock
+    lang="bash"
+    filename="local machine"
+    code={`# 1. Generate a key pair (Ed25519 is the modern standard)
+ssh-keygen -t ed25519 -C "airlab-$(date +%Y)" -f ~/.ssh/id_ed25519_airlab
+
+# 2. Copy the public key to the server
+ssh-copy-id -i ~/.ssh/id_ed25519_airlab.pub firstname.lastname@WESTWORLD_IP
+
+# 3. Test key login (no password prompt means it worked)
+ssh -i ~/.ssh/id_ed25519_airlab firstname.lastname@WESTWORLD_IP whoami`}
+  />
+
+  <!-- ── Navigation ─────────────────────────────────────────────────────────── -->
+  <h2 id="navigation">Navigation & File Operations</h2>
+
+  <p>
+    These are the commands you will use every day. Master them and the rest becomes
+    much easier.
+  </p>
+
+  <table>
+    <thead>
+      <tr><th>Command</th><th>What it does</th><th>Example</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>pwd</code></td><td>Print current directory</td><td><code>pwd</code></td></tr>
+      <tr><td><code>ls</code></td><td>List directory contents</td><td><code>ls -lah</code></td></tr>
+      <tr><td><code>cd</code></td><td>Change directory</td><td><code>cd ~/datasets/private</code></td></tr>
+      <tr><td><code>mkdir</code></td><td>Create a directory</td><td><code>mkdir -p results/run_01</code></td></tr>
+      <tr><td><code>cp</code></td><td>Copy files or directories</td><td><code>cp -r src/ backup/</code></td></tr>
+      <tr><td><code>mv</code></td><td>Move or rename</td><td><code>mv old_name.py new_name.py</code></td></tr>
+      <tr><td><code>rm</code></td><td>Delete files</td><td><code>rm -rf results/old_run/</code></td></tr>
+      <tr><td><code>cat</code></td><td>Print file contents</td><td><code>cat config.yaml</code></td></tr>
+      <tr><td><code>less</code></td><td>Page through a file</td><td><code>less training.log</code></td></tr>
+      <tr><td><code>grep</code></td><td>Search inside files</td><td><code>grep "val_loss" training.log</code></td></tr>
+      <tr><td><code>find</code></td><td>Search for files</td><td><code>find . -name "*.pt"</code></td></tr>
+      <tr><td><code>du</code></td><td>Disk usage</td><td><code>du -sh ~/datasets/private/*</code></td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout callout-danger">
+    <svg class="w-5 h-5 flex-shrink-0 mt-0.5 text-red-500" fill="none" stroke="currentColor"
+         stroke-width="2" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="10"/>
+      <line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
+    </svg>
+    <div class="text-sm leading-relaxed">
+      <strong><code>rm -rf</code> has no undo.</strong> On a shared server there is no
+      trash bin and no backup for your home directory. Double-check the path before
+      pressing Enter, every single time.
+    </div>
+  </div>
+
+  <h3>Useful patterns</h3>
+
+  <CodeBlock
+    lang="bash"
+    code={`# Search command history
+history | grep docker
+
+# Run the last command again as root (use sparingly)
+sudo !!
+
+# Background a running process (Ctrl+Z pauses, then:)
+bg        # resume in background
+jobs      # list background jobs
+fg %1     # bring job 1 back to foreground
+
+# Count lines in a file
+wc -l training.log
+
+# Sort and unique a list
+cat labels.txt | sort | uniq -c | sort -rn
+
+# Extract a .tar.gz archive into a specific directory
+tar -xzf dataset.tar.gz -C ~/datasets/private/`}
+  />
+
+  <!-- ── Monitoring ──────────────────────────────────────────────────────────── -->
+  <h2 id="monitoring">Monitoring Resources</h2>
+
+  <p>
+    Before starting an experiment, always check that the resources you booked are
+    actually free.
+  </p>
+
+  <CodeBlock
+    lang="bash"
+    code={`# CPU, RAM, and per-process stats (interactive, press q to quit)
+htop
+
+# Full GPU status: memory usage, utilisation, running processes
+nvidia-smi
+
+# Compact GPU memory summary
+nvidia-smi --query-gpu=index,name,memory.used,memory.free,memory.total \
+           --format=csv,noheader,nounits
+
+# Watch GPU utilisation live every 2 seconds
+watch -n 2 nvidia-smi
+
+# Check available disk space
+df -h /home
+df -h /data    # NAS mount point`}
+  />
+
+  <p>
+    When using <code>htop</code>, press <kbd>F6</kbd> to sort by CPU or memory,
+    <kbd>F5</kbd> to toggle tree view (see which processes belong to which parent),
+    and <kbd>F9</kbd> to send a signal (e.g., to kill a stuck process).
+  </p>
+
+  <!-- ── File Transfer ──────────────────────────────────────────────────────── -->
+  <h2 id="transfer">Transferring Files</h2>
+
+  <p>
+    Use <code>scp</code> for quick one-off transfers and <code>rsync</code> for anything
+    larger or incremental (it skips files that haven't changed).
+  </p>
+
+  <CodeBlock
+    lang="bash"
+    filename="local machine"
+    code={`# Copy a single file to the server
+scp local_file.py airlab:~/project/
+
+# Copy an entire directory to the server
+scp -r ./results/ airlab:~/project/results/
+
+# rsync a directory (faster for large transfers, skips unchanged files)
+rsync -avz --progress ./dataset/ airlab:~/datasets/private/my_dataset/
+
+# Download results from the server to your local machine
+rsync -avz airlab:~/project/results/ ./local_results/`}
+  />
+
+  <!-- ── Getting Help ────────────────────────────────────────────────────────── -->
+  <h2 id="help">Getting Help</h2>
+
+  <p>
+    Every standard Unix command comes with built-in documentation. The most important
+    ways to access it:
+  </p>
+
+  <CodeBlock
+    lang="bash"
+    code={`# Full manual page (press q to quit, / to search)
+man rsync
+
+# Short usage summary (works for most commands)
+rsync --help
+
+# Quick one-line description of any command
+whatis find
+
+# Search manual pages by keyword
+apropos "compress"`}
+  />
+
+  <p>
+    For questions about the lab specifically, the best resource is always a senior lab
+    member or your co-supervisor. Don't hesitate to ask — everyone started where you are.
+  </p>
+
+</DocsLayout>

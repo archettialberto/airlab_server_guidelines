@@ -1,0 +1,68 @@
+---
+import { NAV, SITE } from '../config/theme';
+
+interface Props {
+  currentPath?: string;
+}
+const { currentPath = '' } = Astro.props;
+
+function isActive(href: string): boolean {
+  // Strip trailing slash for comparison
+  const clean = currentPath.replace(/\/$/, '');
+  return clean === href || clean === href + '/index';
+}
+---
+
+<aside class="w-60 flex-shrink-0">
+  <nav class="sticky top-24 max-h-[calc(100vh-6rem)] overflow-y-auto pb-12">
+
+    {NAV.map((group, gi) => (
+      <div class:list={['mb-1', gi > 0 && 'mt-6']}>
+
+        <!-- Section pill header -->
+        <div class="flex items-center gap-2 px-2 mb-2">
+          <span class="h-px flex-1 bg-gray-100"></span>
+          <span class="text-[10px] font-bold uppercase tracking-widest text-gray-400 whitespace-nowrap">
+            {group.section}
+          </span>
+          <span class="h-px flex-1 bg-gray-100"></span>
+        </div>
+
+        <ul class="space-y-0.5">
+          {group.items.map((item) => {
+            const active = isActive(item.href);
+            return (
+              <li>
+                <a
+                  href={item.href}
+                  class:list={[
+                    'flex items-center gap-2 text-sm px-3 py-2 rounded-lg transition-all duration-100 font-medium',
+                    active
+                      ? 'bg-accent-800 text-white shadow-sm'
+                      : 'text-gray-600 hover:text-accent-800 hover:bg-accent-50',
+                  ]}
+                >
+                  {active && (
+                    <span class="w-1 h-1 rounded-full bg-white/70 flex-shrink-0"></span>
+                  )}
+                  {item.label}
+                </a>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+    ))}
+
+    <div class="mt-8 border-t border-gray-100 pt-5">
+      <p class="text-xs text-gray-400 px-2 leading-relaxed">
+        {SITE.name} v{SITE.version}<br/>
+        <a href={SITE.github}
+           class="text-accent-600 hover:text-accent-700"
+           target="_blank" rel="noopener">
+          Found an issue? Open a PR
+        </a>
+      </p>
+    </div>
+  </nav>
+</aside>

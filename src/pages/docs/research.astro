@@ -1,0 +1,304 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+import CodeBlock from '../../components/CodeBlock.astro';
+
+const toc = [
+  { label: 'Publication Venues',   id: 'venues' },
+  { label: 'Types of Papers',      id: 'paper-types' },
+  { label: 'Finding Papers',       id: 'finding' },
+  { label: 'Evaluating Quality',   id: 'quality' },
+  { label: 'Organising Papers',    id: 'organising' },
+];
+---
+
+<DocsLayout title="Conducting Research" toc={toc}>
+
+  <h1>Conducting Research</h1>
+
+  <img src="/explorer.png" alt="Conducting Research" style="width: 100%; max-width: 600px; margin: 1.5rem auto; display: block;" />
+
+  <p>
+    Every piece of research you do stands on the shoulders of giants — the accumulated work
+    of countless researchers who came before you. Your job is not to reinvent the wheel, but
+    to understand what has already been built well enough to know where the next step lies.
+    This guide will help you navigate the academic publishing ecosystem, find and evaluate
+    relevant work, and situate your thesis within the broader literature.
+  </p>
+
+  <!-- ── Publication Venues ─────────────────────────────────────────────────── -->
+  <h2 id="venues">Publication Venues</h2>
+
+  <p>
+    In computer science and AI, research is primarily disseminated through
+    conferences and journals. Understanding the landscape of venues
+    helps you judge the significance of a paper and, eventually, where to aim your own work.
+  </p>
+
+  <table>
+    <thead>
+      <tr><th>Venue type</th><th>Typical timeline</th><th>What you'll find</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Workshops</strong></td>
+        <td>Co-located with conferences</td>
+        <td>Early-stage ideas, position papers, ongoing work. Lower acceptance bar, great for feedback.</td>
+      </tr>
+      <tr>
+        <td><strong>Conferences</strong></td>
+        <td>6–12 months from submission to proceedings</td>
+        <td>The primary venue for mature contributions in AI/ML/Robotics. Top venues: NeurIPS, ICML, ICLR, CVPR, ECCV, ICCV, ICRA, IROS, RSS.</td>
+      </tr>
+      <tr>
+        <td><strong>Journals</strong></td>
+        <td>1–2+ years from submission</td>
+        <td>Comprehensive, extensively reviewed work. Top journals: TPAMI, IJCV, IJRR, Robotics and Autonomous Systems.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>
+    For your thesis literature review, focus primarily on top-tier conference papers
+    (the last 3–5 years) and journal papers for foundational methods.
+  </p>
+
+  <h3>Understanding Conference and Journal Rankings</h3>
+
+  <p>
+    Not all venues carry the same weight. Use dedicated ranking resources to assess
+    the prestige of a conference or journal before deciding how much to trust its papers:
+  </p>
+
+  <ul>
+    <li>
+      <strong>Conferences</strong> — use the
+      <a href="https://scie.lcc.uma.es/" target="_blank" rel="noopener">SCIE Conference Ranking</a>
+      to check the tier (A*, A, B, C) of a venue. A* and A conferences (e.g., NeurIPS, CVPR, ICRA)
+      represent the gold standard; B venues are still reputable but less selective.
+    </li>
+    <li>
+      <strong>Journals</strong> — use
+      <a href="https://www.scimagojr.com" target="_blank" rel="noopener">SCImago Journal Rank (SJR)</a>
+      to look up a journal's quartile (Q1–Q4) within its subject area. Q1 journals are the most
+      prestigious; Q4 journals warrant extra scrutiny.
+    </li>
+  </ul>
+
+  <p>
+    That said, venue prestige is a useful heuristic, not a verdict. <strong>The content of a
+    paper is always the primary thing to evaluate.</strong> A preprint or a workshop paper can
+    contain a genuinely important idea; conversely, even top-tier venues occasionally publish
+    flawed work. Read critically regardless of where a paper appeared.
+  </p>
+
+  <!-- ── Paper Types ────────────────────────────────────────────────────────── -->
+  <h2 id="paper-types">Types of Papers</h2>
+
+  <p>
+    Learning to distinguish what kind of paper you need at any given moment will save you a lot of reading time.
+    Here are the main types of research papers you'll encounter:
+  </p>
+
+  <table>
+    <thead>
+      <tr><th>Type</th><th>Description</th><th>How to identify it</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Full paper</strong></td>
+        <td>The standard research contribution. Presents a problem, method, experiments, and analysis.</td>
+        <td>8–16 pages; peer-reviewed at a main conference or journal.</td>
+      </tr>
+      <tr>
+        <td><strong>Short paper</strong></td>
+        <td>A focused contribution — same rigour, narrower scope.</td>
+        <td>4–6 pages; often marked explicitly.</td>
+      </tr>
+      <tr>
+        <td><strong>Survey / Review</strong></td>
+        <td>Systematically covers an entire research area. Excellent entry point for new topics.</td>
+        <td>Titles like "A Survey of…", "Recent Advances in…".</td>
+      </tr>
+      <tr>
+        <td><strong>Preprint</strong></td>
+        <td>Not yet peer-reviewed. Fast to share, but treat with appropriate scepticism.</td>
+        <td>arXiv ID (e.g., arXiv:2312.12345). Check if a peer-reviewed version exists.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ── Finding Papers ─────────────────────────────────────────────────────── -->
+  <h2 id="finding">Finding Papers</h2>
+
+  <p>
+    Start broad with a survey paper, then narrow to the specific methods most relevant
+    to your work.
+  </p>
+
+  <h3>Search Engines</h3>
+
+  <table>
+    <thead>
+      <tr><th>Tool</th><th>Best for</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><a href="https://scholar.google.com" target="_blank" rel="noopener">Google Scholar</a></td>
+        <td>General search; citation counts; "Cited by" to find follow-up work.</td>
+      </tr>
+      <tr>
+        <td><a href="https://arxiv.org" target="_blank" rel="noopener">arXiv</a></td>
+        <td>The latest preprints in cs.CV, cs.LG, cs.RO. Subscribe to daily digest emails.</td>
+      </tr>
+      <tr>
+        <td><a href="https://www.semanticscholar.org" target="_blank" rel="noopener">Semantic Scholar</a></td>
+        <td>AI-powered related-paper discovery; excellent citation graph.</td>
+      </tr>
+      <tr>
+        <td><a href="https://paperswithcode.com" target="_blank" rel="noopener">Papers with Code</a></td>
+        <td>Find papers that have public implementations; benchmark leaderboards.</td>
+      </tr>
+      <tr>
+        <td><a href="https://openreview.net" target="_blank" rel="noopener">OpenReview</a></td>
+        <td>Full peer review history for ICLR, NeurIPS, and others — invaluable for understanding how reviewers think.</td>
+      </tr>
+      <tr>
+        <td><a href="https://www.scopus.com" target="_blank" rel="noopener">Scopus</a></td>
+        <td>A comprehensive research database with a query-based search engine for journal articles. Keyword queries retrieve articles containing those words. Requires a PoliMI account.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>A systematic search workflow</h3>
+
+  <p>
+    When entering a new area, use this sequence to build a solid understanding quickly:
+  </p>
+
+  <ol>
+    <li>Search for a recent <strong>survey paper</strong> on your topic. This gives you vocabulary, landmarks, and an overview of open problems.</li>
+    <li>Identify the <strong>5–10 most-cited papers</strong> in the area from the survey's references. These are the foundational methods.</li>
+    <li>For each foundational paper, follow its <strong>"Cited by"</strong> chain on Google Scholar to find the latest work that builds on it. Also browse the <strong>conference proceedings</strong> of relevant top-tier venues to catch important papers that might not surface through citation chains.</li>
+    <li>Repeat steps 2 and 3 <strong>periodically</strong> as your thesis progresses — the state of the art shifts quickly and staying current is an ongoing habit, not a one-off task.</li>
+    <li>Stay updated on <strong>LinkedIn and X (Twitter)</strong> by following prominent researchers, lab accounts, and conference pages. Announcements, code releases, and early discussion of new results surface here before anywhere else.</li>
+  </ol>
+
+  <!-- ── Quality ─────────────────────────────────────────────────────────────── -->
+  <h2 id="quality">Evaluating Paper Quality</h2>
+
+  <p>
+    Not all published work is equally rigorous. Before spending significant time on a
+    paper, do a quick quality check:
+  </p>
+
+  <table>
+    <thead>
+      <tr><th>Signal</th><th>What to check</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Venue</strong></td>
+        <td>Is it a top-tier conference (NeurIPS, CVPR, ICML, ICLR, ICRA…)? Use <a href="https://scie.lcc.uma.es/" target="_blank" rel="noopener">SCIE</a> for conferences and <a href="https://www.scimagojr.com" target="_blank" rel="noopener">SCImago</a> for journals to check rankings.</td>
+      </tr>
+      <tr>
+        <td><strong>Citation count</strong></td>
+        <td>Many citations relative to paper age suggest community acceptance. Treat with caution for preprints.</td>
+      </tr>
+      <tr>
+        <td><strong>Ablation studies</strong></td>
+        <td>Does the paper isolate contributions? A method without ablations may have unexplained gains.</td>
+      </tr>
+      <tr>
+        <td><strong>Baselines</strong></td>
+        <td>Are the comparisons fair and against strong, contemporary baselines?</td>
+      </tr>
+      <tr>
+        <td><strong>Code availability</strong></td>
+        <td>Open-source code strongly suggests the results are reproducible.</td>
+      </tr>
+      <tr>
+        <td><strong>Error bars</strong></td>
+        <td>Are results reported over multiple runs with standard deviation or confidence intervals?</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ── Organising Papers ──────────────────────────────────────────────────── -->
+  <h2 id="organising">Organising Papers</h2>
+
+  <p>
+    A well-organised library pays dividends at every stage of your thesis — from literature
+    review to writing the final draft. The standard tool we recommend is
+    <a href="https://www.zotero.org" target="_blank" rel="noopener"><strong>Zotero</strong></a>
+    (free, open-source, with excellent browser integration).
+  </p>
+
+  <h3>Getting started with Zotero</h3>
+
+  <ul>
+    <li>
+      <strong>Save papers in one click</strong> — install the
+      <a href="https://www.zotero.org/download/connectors" target="_blank" rel="noopener">Zotero Connector</a>
+      browser extension. When you visit a paper page (Google Scholar, arXiv, ACM DL, etc.) the
+      connector detects the metadata and saves the full record — including the PDF — directly to
+      your library.
+    </li>
+    <li>
+      <strong>Organise with collections and tags</strong> — create a collection per thesis chapter
+      or research theme. Use tags to mark papers by status (e.g., <em>to-read</em>,
+      <em>key-paper</em>, <em>cited</em>).
+    </li>
+    <li>
+      <strong>Annotate PDFs inside Zotero</strong> — highlight passages and add notes directly in
+      the built-in PDF reader. All annotations are searchable and attached to the entry.
+    </li>
+    <li>
+      <strong>Export BibTeX</strong> — right-click a collection → <em>Export Collection</em> →
+      BibTeX. Paste the resulting <code>.bib</code> file into your LaTeX project and reference
+      papers with <code>\cite{}</code>.
+    </li>
+  </ul>
+
+  <h3>Syncing your library with OneDrive via ZotMoov</h3>
+
+  <p>
+    By default, Zotero stores PDFs in its own data directory. The
+    <a href="https://github.com/wileyyugioh/zotmoov" target="_blank" rel="noopener"><strong>ZotMoov</strong></a>
+    plugin lets you automatically move attachments to a folder of your choice — such as your
+    PoliMI OneDrive — keeping your PDFs backed up and accessible across devices:
+  </p>
+
+  <ol>
+    <li>Download and install the ZotMoov <code>.xpi</code> from its GitHub releases page via
+      <em>Tools → Add-ons → Install Add-on From File</em> in Zotero.</li>
+    <li>In <em>Tools → ZotMoov Preferences</em>, set the destination directory to a folder
+      inside your OneDrive (e.g., <code>OneDrive/Zotero/Papers</code>).</li>
+    <li>Enable <em>"Automatically move files on add"</em> so every new attachment lands in
+      OneDrive immediately.</li>
+    <li>Use <em>Tools → ZotMoov → Move All Attachments</em> to migrate your existing library
+      in bulk.</li>
+  </ol>
+
+  <p>
+    Your PDFs are now synced to OneDrive, while Zotero's metadata and annotations live in the
+    free Zotero cloud sync — giving you redundant, cross-device access without paying for
+    Zotero storage.
+  </p>
+
+  <div class="callout callout-success">
+    <svg class="w-5 h-5 flex-shrink-0 mt-0.5 text-green-500" fill="none" stroke="currentColor"
+         stroke-width="2" viewBox="0 0 24 24">
+      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+      <polyline points="22 4 12 14.01 9 11.01"/>
+    </svg>
+    <div class="text-sm leading-relaxed">
+      <strong>Take notes — relentlessly.</strong> The single best habit you can build during
+      your thesis period is <strong>taking notes as you go</strong>. Every paper you read,
+      every experiment you run, every insight from a meeting — write it down. When the time
+      comes to write the actual thesis, having a rich record of your thinking means you are
+      assembling material rather than trying to reconstruct it from memory. The more faithfully
+      you record your journey, the easier — and better — your thesis will be.
+    </div>
+  </div>
+
+</DocsLayout>

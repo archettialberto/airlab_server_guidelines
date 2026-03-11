@@ -1,0 +1,30 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+import CodeBlock from '../../components/CodeBlock.astro';
+
+const toc = [
+  { label: 'Publication Venues',   id: 'venues' },
+];
+
+// Curly braces inside template literals are interpreted as JSX expressions in Astro.
+// Store code blocks containing them as plain string variables in the frontmatter.
+const latexBibCode = [
+  '% In your preamble',
+  '\\usepackage[style=ieee,backend=biber]{biblatex}',
+  '\\addbibresource{references.bib}',
+  '',
+  '% In your text',
+  'As shown by~\\cite{He2016ResNets}, deep residual learning...',
+  '',
+  '% At the end of the document',
+  '\\printbibliography',
+].join('\n');
+---
+
+<DocsLayout title="Thesis Dissertation" toc={toc}>
+
+  <h1>Thesis Dissertation</h1>
+
+  <img src="/dissertation.png" alt="Thesis Dissertation" style="width: 100%; max-width: 600px; margin: 1.5rem auto; display: block;" />
+
+</DocsLayout>

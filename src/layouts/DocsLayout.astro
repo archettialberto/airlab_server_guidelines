@@ -20,7 +20,7 @@ const currentPath = new URL(Astro.request.url).pathname;
     <BaseHead title={title} description={description} />
   </head>
 
-  <body class="min-h-screen bg-white">
+  <body class="min-h-screen bg-white overflow-y-scroll">
     <Header currentPath={currentPath} />
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

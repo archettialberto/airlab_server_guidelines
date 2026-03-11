@@ -43,14 +43,15 @@ export const NAV = [
       { label: 'Shell Essentials',     href: '/docs/shell' },
       { label: 'Terminal Multiplexer', href: '/docs/tmux' },
       { label: 'Docker & Experiments', href: '/docs/docker' },
-      { label: 'Git & Code Quality',   href: '/docs/git' },
     ],
   },
   {
     section: 'Thesis Guide',
     items: [
       { label: 'Conducting Research',  href: '/docs/research' },
+      { label: 'Making Presentations',  href: '/docs/presentations' },
       { label: 'Writing Your Thesis',  href: '/docs/thesis' },
+      { label: 'Thesis Dissertation',  href: '/docs/dissertation' },
     ],
   },
 ] as const;

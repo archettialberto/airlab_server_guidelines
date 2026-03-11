@@ -3,12 +3,10 @@ import DocsLayout from '../../layouts/DocsLayout.astro';
 import CodeBlock from '../../components/CodeBlock.astro';
 
 const toc = [
-  { label: 'Welcome to AIRLab',     id: 'welcome' },
   { label: 'Getting Access',        id: 'access' },
   { label: 'Core Responsibilities', id: 'responsibilities' },
   { label: 'Storage Policy',        id: 'storage' },
   { label: 'Resource Booking',      id: 'booking' },
-  { label: 'Key Rules at a Glance', id: 'rules' },
 ];
 ---
 
@@ -19,72 +17,39 @@ const toc = [
   <p>
     Welcome to the <strong>Artificial Intelligence and Robotics Lab (AIRLab)</strong> at
     Politecnico di Milano. This handbook is your starting point. Read it carefully before
-    touching any shared resource — what seems like a minor oversight can disrupt experiments
-    running for hours across the lab.
+    touching any shared resource.
   </p>
-
-  <div class="callout callout-info">
-    <svg class="w-5 h-5 flex-shrink-0 mt-0.5 text-accent-500" fill="none" stroke="currentColor"
-         stroke-width="2" viewBox="0 0 24 24">
-      <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/>
-      <line x1="12" y1="16" x2="12.01" y2="16"/>
-    </svg>
-    <p class="text-sm leading-relaxed">
-      <strong>New member?</strong> The first thing to do is ask your co-supervisor for access
-      credentials and the resource-booking link. Then come back here and read through the rest.
-    </p>
-  </div>
-
-  <!-- ── Welcome ───────────────────────────────────────────────────────────── -->
-  <h2 id="welcome">Welcome to AIRLab</h2>
-
-  <p>
-    AIRLab hosts shared GPU servers — powerful machines used simultaneously by many
-    researchers and thesis students. Shared infrastructure is both a privilege and a
-    responsibility. The guidelines in this handbook exist not to restrict you, but to
-    ensure that everyone — including you — can work without friction.
-  </p>
-
-  <p>
-    The lab's compute environment is built around four pillars:
-  </p>
-
-  <ul>
-    <li><strong>Reproducibility</strong> — every experiment runs inside a Docker container, so results can be replicated by anyone, on any machine.</li>
-    <li><strong>Fairness</strong> — compute resources (CPUs, GPUs) are booked in advance, not grabbed ad hoc.</li>
-    <li><strong>Cleanliness</strong> — your home directory has a firm storage cap; large data lives on the NAS.</li>
-    <li><strong>Documentation</strong> — code is versioned on Git with a clear README, so future lab members can build on your work.</li>
-  </ul>
 
   <!-- ── Getting Access ────────────────────────────────────────────────────── -->
   <h2 id="access">Getting Access</h2>
 
   <p>
     Your co-supervisor will create a Linux account for you on Westworld (the main lab server).
-    Your username follows the convention <code>firstname.lastname</code> (all lowercase).
+    Your username follows the convention <code>lastname</code> (all lowercase).
     Once you have credentials, verify your login:
   </p>
 
   <CodeBlock
     lang="bash"
     filename="local machine"
-    code={`ssh firstname.lastname@<westworld_ip>`}
+    code={`ssh lastname@<westworld_ip>`}
   />
 
   <p>
-    You will be prompted for a temporary password. Change it immediately on first login:
+    You will be prompted for a temporary password. 
+    The password is set to expire on first login and you will be prompted to choose a new one.
+    If you are not prompted to change it, or if you want to change it later, use the following command:
   </p>
 
   <CodeBlock
     lang="bash"
     filename="westworld"
     code={`passwd
-# Enter current (temporary) password, then your new password twice.
-# Use a strong passphrase — this account has access to lab GPUs.`}
+# Enter current (temporary) password, then your new password twice`}
   />
 
   <p>
-    We strongly recommend switching to <strong>SSH key authentication</strong> to avoid
+    We recommend switching to <strong>SSH key authentication</strong> to avoid
     typing passwords over the network. See the
     <a href="/docs/shell#ssh-keys">SSH Keys section</a> in the Shell guide for setup instructions.
   </p>
@@ -94,7 +59,6 @@ const toc = [
 
   <p>
     Every AIRLab member is expected to uphold the following practices from day one.
-    Repeated violations may result in account suspension.
   </p>
 
   <table>
@@ -125,11 +89,24 @@ const toc = [
     </tbody>
   </table>
 
+  <div class="callout callout-warning">
+    <svg class="w-5 h-5 flex-shrink-0 mt-0.5 text-yellow-500" fill="none" stroke="currentColor"
+         stroke-width="2" viewBox="0 0 24 24">
+      <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+      <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+    </svg>
+    <div class="text-sm leading-relaxed">
+      If you are ever unsure whether something is allowed, ask your co-supervisor. 
+      When in doubt, err on the side of caution — the shared
+    infrastructure depends on mutual respect.
+    </div>
+  </div>
+
   <!-- ── Storage Policy ─────────────────────────────────────────────────────── -->
   <h2 id="storage">Storage Policy</h2>
 
   <p>
-    The home directory (<code>/home/firstname.lastname</code>) has a <strong>20 GB hard quota</strong>.
+    The home directory (<code>/home/lastname</code>) has a <strong>20 GB hard quota</strong>.
     Exceeding it will prevent you from saving files — including experiment outputs —
     which can corrupt a running job.
   </p>
@@ -143,45 +120,24 @@ const toc = [
     lang="bash"
     filename="westworld"
     code={`# Datasets and large files go here — NOT in ~/
-~/datasets/private/
+~/storage_megaverse
 
 # Check how much home-directory space you are using
-ncdu -x ~
-
-# Quick disk usage summary (top-level directories only)
-du -sh ~/* 2>/dev/null | sort -rh | head -20`}
+ncdu -x ~`}
   />
-
-  <div class="callout callout-warning">
-    <svg class="w-5 h-5 flex-shrink-0 mt-0.5 text-yellow-500" fill="none" stroke="currentColor"
-         stroke-width="2" viewBox="0 0 24 24">
-      <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-      <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
-    </svg>
-    <div class="text-sm leading-relaxed">
-      <strong>Common mistake:</strong> unzipping a large dataset directly into
-      <code>~/</code> instead of <code>~/datasets/private/</code>.
-      Always double-check your destination path before unpacking archives.
-    </div>
-  </div>
 
   <!-- ── Resource Booking ────────────────────────────────────────────────────── -->
   <h2 id="booking">Resource Booking</h2>
 
   <p>
-    All CPU cores and GPUs must be reserved before use. The booking system prevents two
-    researchers from unknowingly competing for the same hardware and degrading each other's
-    results.
-  </p>
-
-  <p>
-    The booking interface is an internal tool — ask your co-supervisor for the URL and
-    access credentials. When booking:
+    All CPU cores and GPUs must be reserved before use. The booking interface is an internal 
+    spreadsheet — ask your co-supervisor for the URL. When booking:
   </p>
 
   <ul>
     <li>Reserve only what your experiment actually needs. Booking 8 GPUs for a single-GPU job wastes resources for colleagues.</li>
     <li>Set a realistic end time. If your job finishes early, release the reservation.</li>
+    <li>Never book resources for more than <strong>three days</strong> in advance. Instead, make sure your code can be safely paused and resumed with proper checkpointing.</li>
     <li>Check GPU availability with <code>nvidia-smi</code> before starting to confirm no one else is using your reserved slots.</li>
   </ul>
 
@@ -194,42 +150,5 @@ nvidia-smi
 # Watch GPU utilisation live (updates every 2 seconds)
 watch -n 2 nvidia-smi`}
   />
-
-  <!-- ── Rules at a Glance ───────────────────────────────────────────────────── -->
-  <h2 id="rules">Key Rules at a Glance</h2>
-
-  <table>
-    <thead>
-      <tr><th>Do</th><th>Don't</th></tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td>Run all experiments inside Docker containers</td>
-        <td>Install packages globally with <code>pip</code>, <code>conda</code>, or <code>apt</code></td>
-      </tr>
-      <tr>
-        <td>Store datasets in <code>~/datasets/private/</code></td>
-        <td>Fill your home directory with large files</td>
-      </tr>
-      <tr>
-        <td>Book GPUs and CPUs before starting jobs</td>
-        <td>Use unbooked resources, even briefly</td>
-      </tr>
-      <tr>
-        <td>Keep a clean, documented Git repository</td>
-        <td>Commit notebooks with large outputs, model weights, or datasets</td>
-      </tr>
-      <tr>
-        <td>Use <code>tmux</code> to keep sessions alive after disconnecting</td>
-        <td>Leave orphan processes running after your session ends</td>
-      </tr>
-    </tbody>
-  </table>
-
-  <p>
-    If you are ever unsure whether something is allowed, ask your co-supervisor or a
-    senior lab member. When in doubt, err on the side of caution — the shared
-    infrastructure depends on mutual respect.
-  </p>
 
 </DocsLayout>

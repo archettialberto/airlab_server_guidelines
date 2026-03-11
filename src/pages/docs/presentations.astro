@@ -1,0 +1,22 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+import CodeBlock from '../../components/CodeBlock.astro';
+
+const toc = [
+  { label: 'Publication Venues',   id: 'venues' },
+];
+---
+
+<DocsLayout title="Making Presentations" toc={toc}>
+
+  <h1>Making Presentations</h1>
+
+  <img src="/presentations.png" alt="Making Presentations" style="width: 100%; max-width: 600px; margin: 1.5rem auto; display: block;" />
+
+  <p>
+    This section provides guidelines for preparing and delivering presentations, including
+    research talks, conference presentations, and thesis defenses. Effective communication
+    of your work is crucial for sharing your findings with the scientific community and
+    receiving valuable feedback.
+  </p>
+</DocsLayout>

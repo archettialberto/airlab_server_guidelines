@@ -18,7 +18,7 @@ const toc = [
   <img src="/explorer.png" alt="Conducting Research" style="width: 100%; max-width: 600px; margin: 1.5rem auto; display: block;" />
 
   <p>
-    Every piece of research you do stands on the shoulders of giants — the accumulated work
+    Every piece of research you do <strong>stands on the shoulders of giants</strong> — the accumulated work
     of countless researchers who came before you. Your job is not to reinvent the wheel, but
     to understand what has already been built well enough to know where the next step lies.
     This guide will help you navigate the academic publishing ecosystem, find and evaluate
@@ -88,7 +88,8 @@ const toc = [
     That said, venue prestige is a useful heuristic, not a verdict. <strong>The content of a
     paper is always the primary thing to evaluate.</strong> A preprint or a workshop paper can
     contain a genuinely important idea; conversely, even top-tier venues occasionally publish
-    flawed work. Read critically regardless of where a paper appeared.
+    flawed work. Read critically regardless of where a paper is published, evaluating its quality
+    according to the criteria outlined in <a href="#quality">Evaluating Paper Quality</a>.
   </p>
 
   <!-- ── Paper Types ────────────────────────────────────────────────────────── -->
@@ -131,11 +132,9 @@ const toc = [
   <h2 id="finding">Finding Papers</h2>
 
   <p>
-    Start broad with a survey paper, then narrow to the specific methods most relevant
-    to your work.
+    The first step in any research project is to understand the landscape of existing work. This
+    means finding and reading papers that are relevant to your topic. Here are the best search tools:
   </p>
-
-  <h3>Search Engines</h3>
 
   <table>
     <thead>
@@ -148,19 +147,7 @@ const toc = [
       </tr>
       <tr>
         <td><a href="https://arxiv.org" target="_blank" rel="noopener">arXiv</a></td>
-        <td>The latest preprints in cs.CV, cs.LG, cs.RO. Subscribe to daily digest emails.</td>
-      </tr>
-      <tr>
-        <td><a href="https://www.semanticscholar.org" target="_blank" rel="noopener">Semantic Scholar</a></td>
-        <td>AI-powered related-paper discovery; excellent citation graph.</td>
-      </tr>
-      <tr>
-        <td><a href="https://paperswithcode.com" target="_blank" rel="noopener">Papers with Code</a></td>
-        <td>Find papers that have public implementations; benchmark leaderboards.</td>
-      </tr>
-      <tr>
-        <td><a href="https://openreview.net" target="_blank" rel="noopener">OpenReview</a></td>
-        <td>Full peer review history for ICLR, NeurIPS, and others — invaluable for understanding how reviewers think.</td>
+        <td>The latest preprints.</td>
       </tr>
       <tr>
         <td><a href="https://www.scopus.com" target="_blank" rel="noopener">Scopus</a></td>
@@ -172,14 +159,13 @@ const toc = [
   <h3>A systematic search workflow</h3>
 
   <p>
-    When entering a new area, use this sequence to build a solid understanding quickly:
+    When studying a new area, use this sequence to build a solid understanding efficiently:
   </p>
 
   <ol>
-    <li>Search for a recent <strong>survey paper</strong> on your topic. This gives you vocabulary, landmarks, and an overview of open problems.</li>
+    <li>Search for a recent <strong>survey paper</strong> on your topic. This gives you vocabulary, keywords, and an overview of open problems.</li>
     <li>Identify the <strong>5–10 most-cited papers</strong> in the area from the survey's references. These are the foundational methods.</li>
     <li>For each foundational paper, follow its <strong>"Cited by"</strong> chain on Google Scholar to find the latest work that builds on it. Also browse the <strong>conference proceedings</strong> of relevant top-tier venues to catch important papers that might not surface through citation chains.</li>
-    <li>Repeat steps 2 and 3 <strong>periodically</strong> as your thesis progresses — the state of the art shifts quickly and staying current is an ongoing habit, not a one-off task.</li>
     <li>Stay updated on <strong>LinkedIn and X (Twitter)</strong> by following prominent researchers, lab accounts, and conference pages. Announcements, code releases, and early discussion of new results surface here before anywhere else.</li>
   </ol>
 
@@ -202,23 +188,19 @@ const toc = [
       </tr>
       <tr>
         <td><strong>Citation count</strong></td>
-        <td>Many citations relative to paper age suggest community acceptance. Treat with caution for preprints.</td>
+        <td>Many citations relative to paper age suggest community acceptance.</td>
       </tr>
       <tr>
         <td><strong>Ablation studies</strong></td>
-        <td>Does the paper isolate contributions? A method without ablations may have unexplained gains.</td>
+        <td>Does the paper isolate contributions? A method without proper ablations may result in unreliable claims.</td>
       </tr>
       <tr>
         <td><strong>Baselines</strong></td>
-        <td>Are the comparisons fair and against strong, contemporary baselines?</td>
+        <td>Are the comparisons fair and against strong, recent baselines?</td>
       </tr>
       <tr>
         <td><strong>Code availability</strong></td>
         <td>Open-source code strongly suggests the results are reproducible.</td>
-      </tr>
-      <tr>
-        <td><strong>Error bars</strong></td>
-        <td>Are results reported over multiple runs with standard deviation or confidence intervals?</td>
       </tr>
     </tbody>
   </table>
@@ -229,8 +211,8 @@ const toc = [
   <p>
     A well-organised library pays dividends at every stage of your thesis — from literature
     review to writing the final draft. The standard tool we recommend is
-    <a href="https://www.zotero.org" target="_blank" rel="noopener"><strong>Zotero</strong></a>
-    (free, open-source, with excellent browser integration).
+    <a href="https://www.zotero.org" target="_blank" rel="noopener">Zotero</a>
+    (free, open-source, with browser integration).
   </p>
 
   <h3>Getting started with Zotero</h3>
@@ -244,46 +226,17 @@ const toc = [
       your library.
     </li>
     <li>
-      <strong>Organise with collections and tags</strong> — create a collection per thesis chapter
-      or research theme. Use tags to mark papers by status (e.g., <em>to-read</em>,
-      <em>key-paper</em>, <em>cited</em>).
-    </li>
-    <li>
       <strong>Annotate PDFs inside Zotero</strong> — highlight passages and add notes directly in
-      the built-in PDF reader. All annotations are searchable and attached to the entry.
+      the built-in PDF reader.
     </li>
     <li>
-      <strong>Export BibTeX</strong> — right-click a collection → <em>Export Collection</em> →
-      BibTeX. Paste the resulting <code>.bib</code> file into your LaTeX project and reference
-      papers with <code>\cite{}</code>.
+      <strong>Sync your library across devices</strong> — By default, Zotero stores PDFs in its own 
+      cloud storage with very limited space. The <a href="https://github.com/wileyyugioh/zotmoov" target="_blank" rel="noopener">ZotMoov</a>
+      plugin lets you automatically move attachments to a folder of your choice — such as your
+      PoliMI OneDrive — keeping your PDFs backed up and accessible across devices. Follow the instructions 
+      in the ZotMoov GitHub repo to set it up.
     </li>
   </ul>
-
-  <h3>Syncing your library with OneDrive via ZotMoov</h3>
-
-  <p>
-    By default, Zotero stores PDFs in its own data directory. The
-    <a href="https://github.com/wileyyugioh/zotmoov" target="_blank" rel="noopener"><strong>ZotMoov</strong></a>
-    plugin lets you automatically move attachments to a folder of your choice — such as your
-    PoliMI OneDrive — keeping your PDFs backed up and accessible across devices:
-  </p>
-
-  <ol>
-    <li>Download and install the ZotMoov <code>.xpi</code> from its GitHub releases page via
-      <em>Tools → Add-ons → Install Add-on From File</em> in Zotero.</li>
-    <li>In <em>Tools → ZotMoov Preferences</em>, set the destination directory to a folder
-      inside your OneDrive (e.g., <code>OneDrive/Zotero/Papers</code>).</li>
-    <li>Enable <em>"Automatically move files on add"</em> so every new attachment lands in
-      OneDrive immediately.</li>
-    <li>Use <em>Tools → ZotMoov → Move All Attachments</em> to migrate your existing library
-      in bulk.</li>
-  </ol>
-
-  <p>
-    Your PDFs are now synced to OneDrive, while Zotero's metadata and annotations live in the
-    free Zotero cloud sync — giving you redundant, cross-device access without paying for
-    Zotero storage.
-  </p>
 
   <div class="callout callout-success">
     <svg class="w-5 h-5 flex-shrink-0 mt-0.5 text-green-500" fill="none" stroke="currentColor"

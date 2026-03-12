@@ -61,15 +61,7 @@ const sections = [
         <div class="mb-12">
           <img src="/logos/deib-white.png"
                alt="Politecnico di Milano — Department of Electronics, Information and Bioengineering"
-               class="h-9 w-auto opacity-80" />
-        </div>
-
-        <!-- ② Eyebrow ──────────────────────────────────────────────────────── -->
-        <div class="flex items-center gap-3 mb-5">
-          <span class="block w-8 h-px" style="background-color: #4d87d4;"></span>
-          <span class="text-xs font-bold uppercase tracking-widest" style="color: #4d87d4;">
-            Artificial Intelligence &amp; Robotics Lab
-          </span>
+               class="h-16 w-auto opacity-85" />
         </div>
 
         <!-- ③ Main heading ─────────────────────────────────────────────────── -->
@@ -83,7 +75,7 @@ const sections = [
 
         <!-- ④ Sub-copy ──────────────────────────────────────────────────────── -->
         <p class="text-base leading-relaxed mb-10 max-w-lg" style="color: rgba(255,255,255,0.42);">
-          Everything you need at the AI &amp; Robotics Lab —
+          A guide to everything you need —
           from your first SSH session to your final thesis submission.
         </p>
 
@@ -91,7 +83,7 @@ const sections = [
         <div class="flex flex-col sm:flex-row gap-3">
           <a href="/docs/welcome"
              class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold text-sm
-                    bg-white text-accent-800 hover:bg-accent-50 transition-colors shadow-lg">
+                    bg-white/10 border border-white/20 text-white hover:bg-white/20 transition-colors">
             Server Guide
             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
               <path d="M5 12h14M12 5l7 7-7 7"/>
@@ -101,18 +93,12 @@ const sections = [
              class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold text-sm
                     bg-white/10 border border-white/20 text-white hover:bg-white/20 transition-colors">
             Thesis Guide
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+              <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
           </a>
         </div>
 
-        <!-- ⑥ Bottom metadata bar ─────────────────────────────────────────── -->
-        <div class="mt-14 pt-5 flex items-center justify-between border-t" style="border-color: rgba(255,255,255,0.10);">
-          <span class="text-xs uppercase tracking-widest" style="color: rgba(255,255,255,0.28);">
-            ATLAS v{SITE.version}
-          </span>
-          <span class="text-xs" style="color: rgba(255,255,255,0.28);">
-            Politecnico di Milano · DEIB
-          </span>
-        </div>
       </div>
     </section>
 
@@ -182,25 +168,118 @@ const sections = [
     </section>
 
     <!-- ── About AIRLab strip ──────────────────────────────────────────────── -->
-    <section class="border-t border-gray-100 bg-accent-50 py-14">
-      <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        <p class="text-sm font-bold uppercase tracking-widest text-accent-600 mb-3">About</p>
-        <p class="text-gray-700 leading-relaxed">
-          The <strong>Artificial Intelligence and Robotics Lab (AIRLab)</strong> is a research group
-          at <strong>Politecnico di Milano</strong> working on machine learning, computer vision,
-          and intelligent systems. ATLAS is the shared knowledge base maintained by lab members
-          to onboard new researchers as smoothly as possible.
+    <section class="border-t border-gray-100 bg-accent-50 py-16">
+      <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <p class="text-sm font-bold uppercase tracking-widest text-accent-600 mb-4 text-center">About AIRLab</p>
+        <h2 class="text-2xl font-extrabold text-gray-900 text-center mb-6">
+          One of Italy's longest-standing AI research groups
+        </h2>
+        <p class="text-gray-600 leading-relaxed text-center mb-10 max-w-2xl mx-auto">
+          Founded in 1973 at <strong>Politecnico di Milano</strong>, the <strong>Artificial Intelligence and Robotics Lab (AIRLab)</strong>
+          has over 50 years of history in AI, autonomous systems, and machine perception. The lab conducts both
+          theoretical and applied research, hosts ~15 PhD students, and produces over 50 master theses annually.
         </p>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 text-center">
+          <div class="bg-white rounded-xl border border-accent-100 px-6 py-5">
+            <p class="text-3xl font-extrabold text-accent-800 mb-1">50+</p>
+            <p class="text-sm text-gray-500">Years of research in AI &amp; robotics</p>
+          </div>
+          <div class="bg-white rounded-xl border border-accent-100 px-6 py-5">
+            <p class="text-3xl font-extrabold text-accent-800 mb-1">~15</p>
+            <p class="text-sm text-gray-500">PhD students at any given time</p>
+          </div>
+          <div class="bg-white rounded-xl border border-accent-100 px-6 py-5">
+            <p class="text-3xl font-extrabold text-accent-800 mb-1">50+</p>
+            <p class="text-sm text-gray-500">Master theses completed annually</p>
+          </div>
+        </div>
       </div>
     </section>
 
     <!-- ── Footer ─────────────────────────────────────────────────────────── -->
-    <footer class="py-8 border-t border-gray-100">
-      <p class="text-center text-xs text-gray-400 font-medium">
-        ATLAS v{SITE.version} · AIRLab · Politecnico di Milano ·
-        Built with <a href="https://astro.build" class="text-accent-600 hover:underline">Astro</a> &
-        <a href="https://tailwindcss.com" class="text-accent-600 hover:underline">Tailwind CSS</a>
-      </p>
+    <footer style="background-color: #0d1117; color: #8b949e;">
+      <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-10 mb-10">
+
+          <!-- Brand -->
+          <div>
+            <p class="font-extrabold text-white text-base mb-1">ATLAS</p>
+            <p class="text-xs mb-4" style="color: #8b949e;">The AIRLab User Handbook</p>
+            <p class="text-xs leading-relaxed" style="color: #8b949e;">
+              Artificial Intelligence and Robotics Lab<br/>
+              Politecnico di Milano — DEIB<br/>
+              Via Ponzio 34/5, 20133 Milano, Italy
+            </p>
+          </div>
+
+          <!-- Links -->
+          <div>
+            <p class="text-xs font-bold uppercase tracking-widest text-white mb-4">Resources</p>
+            <ul class="space-y-2 text-xs">
+              <li><a href="/docs/welcome" class="hover:text-white transition-colors">Server Guide</a></li>
+              <li><a href="/docs/research" class="hover:text-white transition-colors">Thesis Guide</a></li>
+              <li><a href="https://airlab.deib.polimi.it/" target="_blank" rel="noopener" class="hover:text-white transition-colors">AIRLab Website</a></li>
+              <li><a href="https://huggingface.co/AIRLab-POLIMI" target="_blank" rel="noopener" class="hover:text-white transition-colors">HuggingFace</a></li>
+            </ul>
+          </div>
+
+          <!-- Social -->
+          <div>
+            <p class="text-xs font-bold uppercase tracking-widest text-white mb-4">Connect</p>
+            <div class="flex gap-3">
+              <!-- AIRLab Website -->
+              <a href="https://airlab.deib.polimi.it/" target="_blank" rel="noopener"
+                 aria-label="AIRLab Website"
+                 class="w-8 h-8 rounded-lg flex items-center justify-center transition-colors hover:bg-white/10 hover:text-white"
+                 style="border: 1px solid #30363d;">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/>
+                  <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                </svg>
+              </a>
+              <!-- LinkedIn -->
+              <a href="https://www.linkedin.com/company/airlab-polimi/" target="_blank" rel="noopener"
+                 aria-label="LinkedIn"
+                 class="w-8 h-8 rounded-lg flex items-center justify-center transition-colors hover:bg-white/10 hover:text-white"
+                 style="border: 1px solid #30363d;">
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6zM2 9h4v12H2z"/>
+                  <circle cx="4" cy="4" r="2"/>
+                </svg>
+              </a>
+              <!-- Instagram -->
+              <a href="https://www.instagram.com/airlab_polimi/" target="_blank" rel="noopener"
+                 aria-label="Instagram"
+                 class="w-8 h-8 rounded-lg flex items-center justify-center transition-colors hover:bg-white/10 hover:text-white"
+                 style="border: 1px solid #30363d;">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+                  <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
+                  <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
+                </svg>
+              </a>
+              <!-- HuggingFace -->
+              <a href="https://huggingface.co/AIRLab-POLIMI" target="_blank" rel="noopener"
+                 aria-label="HuggingFace"
+                 class="w-8 h-8 rounded-lg flex items-center justify-center transition-colors hover:bg-white/10 hover:text-white"
+                 style="border: 1px solid #30363d;">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 1C5.925 1 1 5.925 1 12s4.925 11 11 11 11-4.925 11-11S18.075 1 12 1zm0 2c4.971 0 9 4.029 9 9s-4.029 9-9 9-9-4.029-9-9 4.029-9 9-9zm-3.5 6a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zm7 0a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zm-7.25 5c.41 1.75 1.96 3 3.75 3s3.34-1.25 3.75-3h-7.5z"/>
+                </svg>
+              </a>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="border-t pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs" style="border-color: #21262d;">
+          <p style="color: #8b949e;">© {new Date().getFullYear()} AIRLab — Politecnico di Milano. All rights reserved.</p>
+          <p style="color: #8b949e;">
+            Built with <a href="https://astro.build" class="hover:text-white transition-colors">Astro</a> &amp;
+            <a href="https://tailwindcss.com" class="hover:text-white transition-colors">Tailwind CSS</a>
+          </p>
+        </div>
+      </div>
     </footer>
 
     <!-- ── Vanta NET initialisation ──────────────────────────────────────── -->

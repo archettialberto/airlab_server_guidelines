@@ -47,12 +47,12 @@ const toc = [
       <tr>
         <td><strong>Conferences</strong></td>
         <td>6–12 months from submission to proceedings</td>
-        <td>The primary venue for mature contributions in AI/ML/Robotics. Top venues: NeurIPS, ICML, ICLR, CVPR, ECCV, ICCV, ICRA, IROS, RSS.</td>
+        <td>The primary venue for mature contributions in AI/ML/Robotics. Top venues: NeurIPS, ICML, ICLR, CVPR, ECCV, ICCV, ICRA, IROS, etc.</td>
       </tr>
       <tr>
         <td><strong>Journals</strong></td>
         <td>1–2+ years from submission</td>
-        <td>Comprehensive, extensively reviewed work. Top journals: TPAMI, IJCV, IJRR, Robotics and Autonomous Systems.</td>
+        <td>Comprehensive, extensively reviewed work. Top journals: TPAMI, JMLR, IJCV, IJRR, Science Robotics, etc.</td>
       </tr>
     </tbody>
   </table>
@@ -72,7 +72,7 @@ const toc = [
   <ul>
     <li>
       <strong>Conferences</strong> — use the
-      <a href="https://scie.lcc.uma.es/" target="_blank" rel="noopener">SCIE Conference Ranking</a>
+      <a href="https://portal.core.edu.au/conf-ranks/" target="_blank" rel="noopener">CORE Conference Portal</a>
       to check the tier (A*, A, B, C) of a venue. A* and A conferences (e.g., NeurIPS, CVPR, ICRA)
       represent the gold standard; B venues are still reputable but less selective.
     </li>
@@ -84,13 +84,19 @@ const toc = [
     </li>
   </ul>
 
-  <p>
-    That said, venue prestige is a useful heuristic, not a verdict. <strong>The content of a
-    paper is always the primary thing to evaluate.</strong> A preprint or a workshop paper can
-    contain a genuinely important idea; conversely, even top-tier venues occasionally publish
-    flawed work. Read critically regardless of where a paper is published, evaluating its quality
-    according to the criteria outlined in <a href="#quality">Evaluating Paper Quality</a>.
-  </p>
+  <div class="callout callout-warning">
+    <svg class="w-5 h-5 flex-shrink-0 mt-0.5 text-yellow-500" fill="none" stroke="currentColor"
+         stroke-width="2" viewBox="0 0 24 24">
+      <path d="M12 9v2m0 4h.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"/>
+    </svg>
+    <div class="text-sm leading-relaxed">
+      Venue prestige is a useful heuristic, not a verdict. The content of a
+      paper is always the primary thing to evaluate: a preprint or a workshop paper can
+      contain a genuinely important idea; conversely, even top-tier venues occasionally publish
+      flawed work. Read critically regardless of where a paper is published, evaluating its quality
+      according to the criteria outlined in <a href="#quality">Evaluating Paper Quality</a>.    
+    </div>
+  </div>
 
   <!-- ── Paper Types ────────────────────────────────────────────────────────── -->
   <h2 id="paper-types">Types of Papers</h2>
@@ -146,20 +152,16 @@ const toc = [
         <td>General search; citation counts; "Cited by" to find follow-up work.</td>
       </tr>
       <tr>
-        <td><a href="https://arxiv.org" target="_blank" rel="noopener">arXiv</a></td>
-        <td>The latest preprints.</td>
-      </tr>
-      <tr>
         <td><a href="https://www.scopus.com" target="_blank" rel="noopener">Scopus</a></td>
         <td>A comprehensive research database with a query-based search engine for journal articles. Keyword queries retrieve articles containing those words. Requires a PoliMI account.</td>
       </tr>
     </tbody>
   </table>
 
-  <h3>A systematic search workflow</h3>
+  <h3>Starting from scratch</h3>
 
   <p>
-    When studying a new area, use this sequence to build a solid understanding efficiently:
+    When you have a topic but no specific paper to begin from, use this sequence to build a solid understanding efficiently:
   </p>
 
   <ol>
@@ -167,6 +169,20 @@ const toc = [
     <li>Identify the <strong>5–10 most-cited papers</strong> in the area from the survey's references. These are the foundational methods.</li>
     <li>For each foundational paper, follow its <strong>"Cited by"</strong> chain on Google Scholar to find the latest work that builds on it. Also browse the <strong>conference proceedings</strong> of relevant top-tier venues to catch important papers that might not surface through citation chains.</li>
     <li>Stay updated on <strong>LinkedIn and X (Twitter)</strong> by following prominent researchers, lab accounts, and conference pages. Announcements, code releases, and early discussion of new results surface here before anywhere else.</li>
+  </ol>
+
+  <h3>Starting from an existing paper</h3>
+
+  <p>
+    When your supervisor gives you a specific paper as a starting point, use that paper as a hub and expand outward:
+  </p>
+
+  <ol>
+    <li>Read the paper carefully and identify the key <strong>problem it solves</strong>, the method it proposes, and its main claims.</li>
+    <li>Mine its <strong>reference list</strong> for foundational and directly related work — these are the papers you need to understand first.</li>
+    <li>Use the <strong>"Cited by"</strong> chain on Google Scholar to find papers that build on or challenge it. This reveals the trajectory of the field after this work was published.</li>
+    <li>Look for a <strong>survey paper</strong> that covers the same area — it will contextualise the paper within the broader literature and surface related threads you might otherwise miss.</li>
+    <li>Stay updated on <strong>LinkedIn and X (Twitter)</strong> by following the paper's authors and relevant lab accounts to track their latest work and ongoing discussions.</li>
   </ol>
 
   <!-- ── Quality ─────────────────────────────────────────────────────────────── -->
@@ -183,20 +199,16 @@ const toc = [
     </thead>
     <tbody>
       <tr>
-        <td><strong>Venue</strong></td>
-        <td>Is it a top-tier conference (NeurIPS, CVPR, ICML, ICLR, ICRA…)? Use <a href="https://scie.lcc.uma.es/" target="_blank" rel="noopener">SCIE</a> for conferences and <a href="https://www.scimagojr.com" target="_blank" rel="noopener">SCImago</a> for journals to check rankings.</td>
-      </tr>
-      <tr>
-        <td><strong>Citation count</strong></td>
-        <td>Many citations relative to paper age suggest community acceptance.</td>
-      </tr>
-      <tr>
         <td><strong>Ablation studies</strong></td>
         <td>Does the paper isolate contributions? A method without proper ablations may result in unreliable claims.</td>
       </tr>
       <tr>
         <td><strong>Baselines</strong></td>
         <td>Are the comparisons fair and against strong, recent baselines?</td>
+      </tr>
+      <tr>
+        <td><strong>Evaluation</strong></td>
+        <td>Are the findings exhaustively evaluated across multiple datasets and metrics? Are the results and limitations clearly discussed?</td>
       </tr>
       <tr>
         <td><strong>Code availability</strong></td>

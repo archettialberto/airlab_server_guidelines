@@ -40,8 +40,7 @@ export const NAV = [
     section: 'Server Guide',
     items: [
       { label: 'Welcome & Onboarding', href: '/docs/welcome' },
-      { label: 'Shell Essentials',     href: '/docs/shell' },
-      { label: 'Terminal Multiplexer', href: '/docs/tmux' },
+      { label: 'Shell & Terminal',     href: '/docs/shell' },
       { label: 'Docker & Experiments', href: '/docs/docker' },
     ],
   },

@@ -9,7 +9,9 @@ const toc = [
   { label: 'Building Images',      id: 'building' },
   { label: 'Running Containers',   id: 'running' },
   { label: 'Run Configurations',   id: 'runconfigs' },
+  { label: 'VS Code Integration',  id: 'vscode' },
   { label: 'Jupyter Notebooks',    id: 'jupyter' },
+  { label: 'TensorBoard',          id: 'tensorboard' },
   { label: 'Best Practices',       id: 'best-practices' },
 ];
 ---
@@ -41,6 +43,16 @@ const toc = [
     <li><strong>Clean servers</strong> — no global package pollution; the server OS stays pristine.</li>
   </ul>
 
+  <p>The standard development cycle is:</p>
+
+  <ol>
+    <li><strong>Write</strong> a <code>Dockerfile</code> describing your environment</li>
+    <li><strong>Build</strong> it into a Docker image (a binary snapshot)</li>
+    <li><strong>Run</strong> the image as a container, mounting your code and dataset from outside</li>
+    <li><strong>Develop / debug</strong> by attaching to the running container</li>
+    <li><strong>Stop and remove</strong> the container when done; the image can be rebuilt at any time</li>
+  </ol>
+
   <!-- ── Project Structure ──────────────────────────────────────────────────── -->
   <h2 id="structure">Project Structure</h2>
 
@@ -60,12 +72,20 @@ const toc = [
 │   └── models/
 ├── configs/               # YAML/JSON configuration files
 │   └── default.yaml
-├── Dockerfile             # image definition
+├── docker/
+│   ├── Dockerfile
+│   └── build.sh           # convenience build script
 ├── requirements.txt       # Python dependencies (pinned versions)
-├── .runconfig             # dataset mounts, GPU allocation, env vars
+├── run.sh                 # convenience run script (wraps docker run)
 ├── .gitignore
 └── README.md              # setup & usage instructions`}
   />
+
+  <p>
+    Keep a <code>build.sh</code> and a <code>run.sh</code> in the repo so every
+    collaborator uses the exact same flags — no more "it worked on my machine" because
+    someone forgot a mount or an environment variable.
+  </p>
 
   <!-- ── Dockerfile ─────────────────────────────────────────────────────────── -->
   <h2 id="dockerfile">Writing a Dockerfile</h2>
@@ -78,14 +98,12 @@ const toc = [
 
   <CodeBlock
     lang="dockerfile"
-    filename="Dockerfile"
+    filename="docker/Dockerfile"
     code={`# ── Base image ────────────────────────────────────────────
-# Replace with the CUDA version that matches Westworld.
 # Browse available tags at: https://hub.docker.com/r/nvidia/cuda/tags
 FROM nvidia/cuda:12.1.0-cudnn8-runtime-ubuntu22.04
 
 # ── System dependencies ───────────────────────────────────
-# Install only what is truly needed; keep layers small.
 RUN apt-get update && apt-get install -y --no-install-recommends \
       python3.11 \
       python3.11-venv \
@@ -111,9 +129,7 @@ CMD ["python3", "src/train.py"]`}
   />
 
   <p>
-    Pin every dependency to an exact version in <code>requirements.txt</code>. Use
-    <code>pip freeze</code> in a working environment to generate the list, or specify
-    versions manually:
+    Pin every dependency to an exact version in <code>requirements.txt</code>:
   </p>
 
   <CodeBlock
@@ -139,7 +155,7 @@ tensorboard==2.16.2`}
     lang="bash"
     filename="westworld — project root"
     code={`# Build the image. Convention: <username>/<project>:<version>
-docker build --rm -t lastname/my_project:v1 .
+docker build --rm -t lastname/my_project:v1 -f docker/Dockerfile .
 
 # Verify the image was built
 docker images | grep my_project
@@ -149,8 +165,8 @@ docker image prune`}
   />
 
   <p>
-    The <code>--rm</code> flag removes intermediate containers after the build completes,
-    keeping the server tidy. Rebuild after any change to your <code>Dockerfile</code> or
+    The <code>--rm</code> flag removes intermediate containers after the build, keeping the
+    server tidy. Rebuild whenever you change <code>Dockerfile</code> or
     <code>requirements.txt</code>.
   </p>
 
@@ -159,37 +175,83 @@ docker image prune`}
 
   <p>
     AIRLab servers provide a helper script called <code>run-docker</code> that wraps
-    the standard <code>docker run</code> command with sensible defaults (GPU assignment,
-    current-directory mount, user permissions). Ask your co-supervisor how to obtain it.
+    <code>docker run</code> with sensible defaults (GPU assignment, directory mounts,
+    user permissions). Ask your co-supervisor how to obtain it.
   </p>
 
   <CodeBlock
     lang="bash"
     filename="westworld"
     code={`# Usage: run-docker <gpu_indices> <cpu_cores> <command...>
-# Example: use GPU 0, 4 CPU cores, run training
+# Example: GPU 0, 4 CPU cores, run training
 run-docker 0 4 python3 src/train.py --config configs/default.yaml
 
-# Use two GPUs (0 and 1), 8 cores
+# Two GPUs (0 and 1), 8 cores
 run-docker 0,1 8 python3 src/train_multi_gpu.py
 
-# Start an interactive bash shell inside the container (useful for debugging)
+# Interactive bash shell for debugging
 run-docker 0 4 bash`}
   />
 
   <p>
-    If <code>run-docker</code> is not yet available, here is the equivalent raw Docker command:
+    If <code>run-docker</code> is not yet available, here is the equivalent raw Docker
+    command with all flags explained:
   </p>
 
   <CodeBlock
     lang="bash"
-    code={`docker run --rm --gpus '"device=0"' \
-  --cpuset-cpus="0-3" \
-  -v "$(pwd)":/workspace \
-  -w /workspace \
-  --user "$(id -u):$(id -g)" \
-  lastname/my_project:v1 \
+    filename="westworld"
+    code={`# Get your UID and GID (needed to avoid root-owned output files)
+id lastname
+# example output: uid=1085(lastname) gid=20002(users) ...
+
+docker run \\
+  -d \\                                           # run in background (detached)
+  --rm \\                                         # auto-remove container when it exits
+  -it \\                                          # allocate a pseudo-TTY
+  --gpus '"device=7"' \\                          # assign GPU 7
+  --cpuset-cpus 104-111 \\                        # assign CPU cores 104–111
+  -u 1085:20002 \\                                # run as your user (uid:gid)
+  -e HOST_UID=1085 -e HOST_GID=20002 \\          # pass uid/gid as env vars
+  -w /workspace \\                               # set working directory inside container
+  --mount type=bind,source=/home/lastname/storage/project,target=/workspace \\
+  --mount type=bind,source=/home/lastname/dataset/private,target=/workspace/datasets \\
+  --name lastname_my_project \\                   # name the container
+  lastname/my_project:v1 \\                       # image to use
   python3 src/train.py`}
+  />
+
+  <p>
+    Key flags to remember:
+  </p>
+
+  <table>
+    <thead>
+      <tr><th>Flag</th><th>Purpose</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>-d</code></td><td>Detach — container runs in background</td></tr>
+      <tr><td><code>--rm</code></td><td>Remove container automatically when it stops</td></tr>
+      <tr><td><code>-it</code></td><td>Keep a terminal attached (needed for interactive use)</td></tr>
+      <tr><td><code>--gpus</code></td><td>Assign specific GPUs (must match booked resources)</td></tr>
+      <tr><td><code>--cpuset-cpus</code></td><td>Restrict to specific CPU cores</td></tr>
+      <tr><td><code>-u uid:gid</code></td><td>Run as your user so output files are owned by you</td></tr>
+      <tr><td><code>--mount</code></td><td>Bind-mount a host directory into the container</td></tr>
+      <tr><td><code>--name</code></td><td>Give the container a recognisable name</td></tr>
+    </tbody>
+  </table>
+
+  <CodeBlock
+    lang="bash"
+    filename="westworld"
+    code={`# Useful container management commands
+docker ps                           # list running containers
+docker ps | grep lastname           # filter to yours
+docker exec -it CONTAINER_ID bash   # attach a shell to a running container
+docker logs CONTAINER_ID            # view container output
+docker stop CONTAINER_ID            # stop a running container
+docker rm   CONTAINER_ID            # remove a stopped container
+docker rmi  lastname/my_project:v1  # delete an image`}
   />
 
   <!-- ── Run Configs ─────────────────────────────────────────────────────────── -->
@@ -198,15 +260,13 @@ run-docker 0 4 bash`}
   <p>
     The <code>.runconfig</code> file lets you declare persistent options for
     <code>run-docker</code> without repeating them on the command line every time.
-    Common uses: mounting dataset directories, exposing ports, and setting environment
-    variables.
   </p>
 
   <CodeBlock
     lang="bash"
     filename=".runconfig"
-    code={`# Mount your private dataset directory into the container
--v ~/datasets/private/coco:/data/coco:ro
+    code={`# Mount your private dataset directory into the container (read-only)
+-v ~/dataset/private/coco:/data/coco:ro
 
 # Mount a shared lab dataset (read-only)
 -v /data/shared/imagenet:/data/imagenet:ro
@@ -219,36 +279,162 @@ run-docker 0 4 bash`}
 -e PYTHONPATH=/workspace/src`}
   />
 
+  <!-- ── VS Code Integration ────────────────────────────────────────────────── -->
+  <h2 id="vscode">VS Code Integration</h2>
+
+  <p>
+    The recommended workflow is to run your container in the background and attach VS Code
+    directly to it. This gives you a full IDE (IntelliSense, debugging, notebooks) inside
+    the container environment, without any manual port management.
+  </p>
+
+  <ol>
+    <li>
+      Install the <strong>Dev Containers</strong> extension in VS Code
+      (<code>ms-vscode-remote.remote-containers</code>)
+    </li>
+    <li>
+      Start your container with <code>-d -it</code> (detached + pseudo-TTY) so it stays
+      alive waiting for a connection
+    </li>
+    <li>
+      Open the VS Code Command Palette (<kbd>Ctrl+Shift+P</kbd>) →
+      <em>Dev Containers: Attach to Running Container</em> → select your container
+    </li>
+    <li>
+      Your project folder (<code>/workspace</code>) opens in a full remote VS Code session
+      running inside the container
+    </li>
+  </ol>
+
+  <div class="callout callout-info">
+    <svg class="w-5 h-5 flex-shrink-0 mt-0.5 text-accent-500" fill="none" stroke="currentColor"
+         stroke-width="2" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/>
+      <line x1="12" y1="16" x2="12.01" y2="16"/>
+    </svg>
+    <p class="text-sm leading-relaxed">
+      The <strong>Remote - SSH</strong> extension and the <strong>Dev Containers</strong>
+      extension can be used together: SSH into the server first, then attach to a container
+      running on that server. VS Code handles the tunnel transparently.
+    </p>
+  </div>
+
+  <h3>Port forwarding</h3>
+
+  <p>
+    When a process inside the container listens on a port (e.g., TensorBoard on 6006,
+    Jupyter on 8888), VS Code can forward it to your local machine automatically.
+    Open the <strong>Ports</strong> panel (<kbd>Alt+J</kbd> → Ports tab) and click
+    <em>Add Port</em> if the auto-detection misses it.
+  </p>
+
   <!-- ── Jupyter ─────────────────────────────────────────────────────────────── -->
   <h2 id="jupyter">Jupyter Notebooks</h2>
 
   <p>
-    Notebooks are useful for exploration and visualisation, but should not contain
-    core training logic (see the <a href="/docs/git#notebooks">Git guide</a> for why).
-    To run a Jupyter server inside a container:
+    Notebooks are useful for exploration and visualisation, but should not contain core
+    training logic. To run Jupyter inside a container:
   </p>
 
   <CodeBlock
     lang="bash"
     filename="westworld"
-    code={`# Start Jupyter inside the container, exposed on port 8888
-run-docker 0 4 jupyter notebook --ip=0.0.0.0 --port=8888 --no-browser`}
+    code={`run-docker 0 4 jupyter notebook --ip=0.0.0.0 --port=8888 --no-browser`}
   />
 
   <p>
-    Then, on your local machine, forward the port through SSH to access the notebook
-    in your browser:
+    Then forward the port on your local machine to access it in the browser:
   </p>
 
   <CodeBlock
     lang="bash"
     filename="local machine"
-    code={`# Forward remote port 8888 to your local port 8888
-ssh -L 8888:localhost:8888 airlab
+    code={`# Forward remote port 8888 to local 8888
+ssh -L 8888:localhost:8888 ww
 
-# Open in your browser:
-# http://localhost:8888
+# Open in browser: http://localhost:8888
 # (copy the token from the Jupyter output on the server)`}
+  />
+
+  <p>
+    If you are attached via VS Code (see <a href="#vscode">VS Code Integration</a> above),
+    VS Code will detect the Jupyter port and offer to forward it automatically. You can
+    also run <code>.ipynb</code> notebooks directly in the VS Code editor using the
+    <strong>Jupyter</strong> extension (<code>@tag:notebookKernelJupyterNotebook</code>),
+    selecting the container's Python interpreter as the kernel.
+  </p>
+
+  <!-- ── TensorBoard ─────────────────────────────────────────────────────────── -->
+  <h2 id="tensorboard">TensorBoard</h2>
+
+  <p>
+    TensorBoard is the standard tool for tracking and comparing experiments.
+    It can visualise scalars (loss, accuracy), images, model graphs, and embeddings.
+  </p>
+
+  <h3>Logging from PyTorch</h3>
+
+  <CodeBlock
+    lang="python"
+    filename="src/train.py"
+    code={`from torch.utils.tensorboard import SummaryWriter
+
+# Create a writer with a descriptive run name
+writer = SummaryWriter(log_dir="runs/exp_lr1e-3_bs32")
+
+for epoch in range(num_epochs):
+    # Log scalars
+    writer.add_scalar("Loss/train", train_loss, epoch)
+    writer.add_scalar("Loss/val",   val_loss,   epoch)
+    writer.add_scalar("Accuracy",   accuracy,   epoch)
+
+writer.close()`}
+  />
+
+  <h3>Launching TensorBoard</h3>
+
+  <CodeBlock
+    lang="bash"
+    filename="westworld (inside the container)"
+    code={`# Point TensorBoard at your runs directory
+tensorboard --logdir runs/ --port 6006
+
+# Or compare multiple experiments at once
+tensorboard --logdir_spec exp1:runs/exp_lr1e-3,exp2:runs/exp_lr1e-4 --port 6006`}
+  />
+
+  <p>
+    Then forward port 6006 from the server to your local machine — VS Code does this
+    automatically when TensorBoard starts, or you can do it manually:
+  </p>
+
+  <CodeBlock
+    lang="bash"
+    filename="local machine"
+    code={`ssh -L 6006:localhost:6006 ww
+# Open in browser: http://localhost:6006`}
+  />
+
+  <h3>Projector (embedding visualisation)</h3>
+
+  <p>
+    TensorBoard's Projector tab lets you project high-dimensional embeddings into 2D/3D
+    space using PCA, UMAP, or t-SNE. This is extremely useful for understanding whether
+    your model's latent space is well-structured — for example, whether embeddings of the
+    same class cluster together, or to spot outliers.
+  </p>
+
+  <CodeBlock
+    lang="python"
+    code={`# Log embeddings with optional metadata (labels, images)
+writer.add_embedding(
+    features,           # Tensor of shape (N, D)
+    metadata=labels,    # list of N label strings
+    label_img=images,   # Tensor of shape (N, C, H, W) — optional
+    global_step=epoch,
+    tag="embeddings"
+)`}
   />
 
   <!-- ── Best Practices ────────────────────────────────────────────────────────── -->
@@ -261,11 +447,11 @@ ssh -L 8888:localhost:8888 airlab
     <tbody>
       <tr>
         <td>Pin all dependency versions in <code>requirements.txt</code></td>
-        <td>Use <code>pip install torch</code> (no version pin)</td>
+        <td>Use <code>pip install torch</code> with no version pin</td>
       </tr>
       <tr>
         <td>Use <code>--no-cache-dir</code> in <code>pip install</code></td>
-        <td>Let pip cache accumulate inside the image layer</td>
+        <td>Let pip cache accumulate inside image layers</td>
       </tr>
       <tr>
         <td>Chain <code>RUN</code> commands with <code>&amp;&amp;</code> to reduce layers</td>
@@ -276,8 +462,16 @@ ssh -L 8888:localhost:8888 airlab
         <td>Always use <code>:latest</code></td>
       </tr>
       <tr>
-        <td>Mount datasets from outside the container (<code>-v</code>)</td>
+        <td>Mount datasets from outside the container (<code>-v</code> or <code>--mount</code>)</td>
         <td>Copy large datasets into the image with <code>COPY</code></td>
+      </tr>
+      <tr>
+        <td>Use config files for experiment variants — keep source code unchanged</td>
+        <td>Hardcode hyperparameters inside <code>train.py</code></td>
+      </tr>
+      <tr>
+        <td>Log to files and TensorBoard rather than printing to the console</td>
+        <td>Rely on <code>print()</code> as your only record of experiment results</td>
       </tr>
       <tr>
         <td>Run <code>docker image prune</code> periodically</td>
@@ -285,5 +479,18 @@ ssh -L 8888:localhost:8888 airlab
       </tr>
     </tbody>
   </table>
+
+  <div class="callout callout-info">
+    <svg class="w-5 h-5 flex-shrink-0 mt-0.5 text-accent-500" fill="none" stroke="currentColor"
+         stroke-width="2" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/>
+      <line x1="12" y1="16" x2="12.01" y2="16"/>
+    </svg>
+    <p class="text-sm leading-relaxed">
+      For a working end-to-end example, see the lab's MNIST toy project on GitHub:
+      <a href="https://github.com/AIRLab-POLIMI/MNIST_Toy_Example" target="_blank" rel="noopener">AIRLab-POLIMI/MNIST_Toy_Example</a>.
+      It demonstrates the full Dockerfile → build → run → attach workflow described here.
+    </p>
+  </div>
 
 </DocsLayout>

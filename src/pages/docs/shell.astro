@@ -3,24 +3,72 @@ import DocsLayout from '../../layouts/DocsLayout.astro';
 import CodeBlock from '../../components/CodeBlock.astro';
 
 const toc = [
-  { label: 'Connecting via SSH',   id: 'ssh' },
-  { label: 'SSH Keys',             id: 'ssh-keys' },
-  { label: 'Navigation & Files',   id: 'navigation' },
-  { label: 'Monitoring Resources', id: 'monitoring' },
-  { label: 'File Transfer',        id: 'transfer' },
-  { label: 'Getting Help',         id: 'help' },
+  { label: 'Connecting via SSH',    id: 'ssh' },
+  { label: 'SSH Keys',              id: 'ssh-keys' },
+  { label: 'GitHub on the Server',  id: 'github' },
+  { label: 'Navigation & Files',    id: 'navigation' },
+  { label: 'Monitoring Resources',  id: 'monitoring' },
+  { label: 'tmux',                  id: 'tmux' },
 ];
 ---
 
-<DocsLayout title="Shell Essentials" toc={toc}>
+<DocsLayout title="Shell & Terminal" toc={toc}>
 
-  <h1>Shell Essentials</h1>
+  <h1>Shell & Terminal</h1>
 
   <p>
     The command line is your primary interface to the AIRLab servers. This guide covers
-    everything from connecting for the first time to monitoring GPU usage and moving files
-    around. If you are new to the Linux shell, work through this page before anything else.
+    the basics of connecting, navigating, and managing your work through the shell.
   </p>
+
+  <!-- ── SSH ────────────────────────────────────────────────────────────────── -->
+  <h2 id="ssh">Connecting via SSH</h2>
+
+  <p>
+    SSH (Secure Shell) creates an encrypted connection to the server. The server IPs are
+    internal — ask your co-supervisor for them. To avoid typing raw IPs, add them to
+    your system's hosts file as memorable aliases:
+  </p>
+
+  <CodeBlock
+    lang="text"
+    filename="/etc/hosts"
+    code={`# AIRLab servers — replace with actual IPs from your co-supervisor
+<WESTWORLD_IP>   westworld ww
+<ELYSIUM_IP>     elysium   ely`}
+  />
+
+  <p>
+    Then configure your SSH client to handle usernames and key selection automatically.
+    Add the following to your SSH config file (create it if it doesn't exist):
+  </p>
+
+  <CodeBlock
+    lang="text"
+    filename="~/.ssh/config"
+    code={`# Westworld
+Host ww westworld
+  HostName westworld
+  User lastname
+  IdentityFile ~/.ssh/id_ed25519_airlab
+  ServerAliveInterval 60
+  ServerAliveCountMax 3
+
+# Elysium
+Host ely elysium
+  HostName elysium
+  User lastname
+  IdentityFile ~/.ssh/id_ed25519_airlab
+  ServerAliveInterval 60
+  ServerAliveCountMax 3`}
+  />
+
+  <p>
+    With this in place, connecting to any server is just:
+  </p>
+
+  <CodeBlock lang="bash" filename="local machine" code={`ssh ww      # westworld
+ssh ely     # elysium`} />
 
   <div class="callout callout-info">
     <svg class="w-5 h-5 flex-shrink-0 mt-0.5 text-accent-500" fill="none" stroke="currentColor"
@@ -29,48 +77,11 @@ const toc = [
       <line x1="12" y1="16" x2="12.01" y2="16"/>
     </svg>
     <p class="text-sm leading-relaxed">
-      <strong>Recommended reading:</strong> MIT's
-      <a href="https://missing.csail.mit.edu/" target="_blank" rel="noopener">The Missing Semester of Your CS Education</a>
-      is an excellent, free course covering the shell, editors, Git, and more.
-      It takes about a weekend to work through and will save you hours every week.
+      After editing <code>~/.ssh/config</code>, host names get tab-autocomplete in your terminal.
+      You can also open remote folders directly in VS Code with the <strong>Remote - SSH</strong>
+      extension using these same aliases.
     </p>
   </div>
-
-  <!-- ── SSH ────────────────────────────────────────────────────────────────── -->
-  <h2 id="ssh">Connecting via SSH</h2>
-
-  <p>
-    SSH (Secure Shell) creates an encrypted connection to the remote server. Your
-    co-supervisor will give you the server's IP address (<code>WESTWORLD_IP</code>).
-  </p>
-
-  <CodeBlock
-    lang="bash"
-    filename="local machine"
-    code={`ssh firstname.lastname@WESTWORLD_IP`}
-  />
-
-  <p>
-    To avoid typing the IP and username every time, add an alias in your SSH client
-    configuration file:
-  </p>
-
-  <CodeBlock
-    lang="text"
-    filename="~/.ssh/config"
-    code={`Host airlab
-  HostName WESTWORLD_IP
-  User firstname.lastname
-  IdentityFile ~/.ssh/id_ed25519_airlab   # see SSH Keys below
-  ServerAliveInterval 60
-  ServerAliveCountMax 3`}
-  />
-
-  <p>
-    With this in place, you connect with just:
-  </p>
-
-  <CodeBlock lang="bash" filename="local machine" code={`ssh airlab`} />
 
   <!-- ── SSH Keys ────────────────────────────────────────────────────────────── -->
   <h2 id="ssh-keys">SSH Keys</h2>
@@ -86,20 +97,25 @@ const toc = [
     code={`# 1. Generate a key pair (Ed25519 is the modern standard)
 ssh-keygen -t ed25519 -C "airlab-$(date +%Y)" -f ~/.ssh/id_ed25519_airlab
 
-# 2. Copy the public key to the server
-ssh-copy-id -i ~/.ssh/id_ed25519_airlab.pub firstname.lastname@WESTWORLD_IP
+# 2. Copy the public key to every server you use
+ssh-copy-id -i ~/.ssh/id_ed25519_airlab.pub lastname@<westworld_ip>
+ssh-copy-id -i ~/.ssh/id_ed25519_airlab.pub lastname@<elysium_ip>
 
-# 3. Test key login (no password prompt means it worked)
-ssh -i ~/.ssh/id_ed25519_airlab firstname.lastname@WESTWORLD_IP whoami`}
+# 3. Test key login — no password prompt means it worked
+ssh -i ~/.ssh/id_ed25519_airlab lastname@<westworld_ip> whoami`}
   />
 
-  <!-- ── Navigation ─────────────────────────────────────────────────────────── -->
-  <h2 id="navigation">Navigation & File Operations</h2>
+  <!-- ── GitHub on the Server ────────────────────────────────────────────────── -->
+  <h2 id="github">GitHub on the Server</h2>
 
   <p>
-    These are the commands you will use every day. Master them and the rest becomes
-    much easier.
+    You will want to <code>git clone</code> and <code>git push</code> directly from the
+    compute servers. The easiest way is to connect remotely with VSCode's <strong>Remote - SSH</strong> extension and use the built-in Git integration.
+    More on that in the <a href="/docs/docker#vscode">VS Code Integration</a> section of the Docker guide.
   </p>
+
+  <!-- ── Navigation ─────────────────────────────────────────────────────────── -->
+  <h2 id="navigation">Common Navigation & File Operations</h2>
 
   <table>
     <thead>
@@ -108,7 +124,7 @@ ssh -i ~/.ssh/id_ed25519_airlab firstname.lastname@WESTWORLD_IP whoami`}
     <tbody>
       <tr><td><code>pwd</code></td><td>Print current directory</td><td><code>pwd</code></td></tr>
       <tr><td><code>ls</code></td><td>List directory contents</td><td><code>ls -lah</code></td></tr>
-      <tr><td><code>cd</code></td><td>Change directory</td><td><code>cd ~/datasets/private</code></td></tr>
+      <tr><td><code>cd</code></td><td>Change directory</td><td><code>cd ~/dataset/private</code></td></tr>
       <tr><td><code>mkdir</code></td><td>Create a directory</td><td><code>mkdir -p results/run_01</code></td></tr>
       <tr><td><code>cp</code></td><td>Copy files or directories</td><td><code>cp -r src/ backup/</code></td></tr>
       <tr><td><code>mv</code></td><td>Move or rename</td><td><code>mv old_name.py new_name.py</code></td></tr>
@@ -117,7 +133,7 @@ ssh -i ~/.ssh/id_ed25519_airlab firstname.lastname@WESTWORLD_IP whoami`}
       <tr><td><code>less</code></td><td>Page through a file</td><td><code>less training.log</code></td></tr>
       <tr><td><code>grep</code></td><td>Search inside files</td><td><code>grep "val_loss" training.log</code></td></tr>
       <tr><td><code>find</code></td><td>Search for files</td><td><code>find . -name "*.pt"</code></td></tr>
-      <tr><td><code>du</code></td><td>Disk usage</td><td><code>du -sh ~/datasets/private/*</code></td></tr>
+      <tr><td><code>du</code></td><td>Disk usage</td><td><code>du -sh ~/dataset/private/*</code></td></tr>
     </tbody>
   </table>
 
@@ -141,14 +157,6 @@ ssh -i ~/.ssh/id_ed25519_airlab firstname.lastname@WESTWORLD_IP whoami`}
     code={`# Search command history
 history | grep docker
 
-# Run the last command again as root (use sparingly)
-sudo !!
-
-# Background a running process (Ctrl+Z pauses, then:)
-bg        # resume in background
-jobs      # list background jobs
-fg %1     # bring job 1 back to foreground
-
 # Count lines in a file
 wc -l training.log
 
@@ -156,7 +164,7 @@ wc -l training.log
 cat labels.txt | sort | uniq -c | sort -rn
 
 # Extract a .tar.gz archive into a specific directory
-tar -xzf dataset.tar.gz -C ~/datasets/private/`}
+tar -xzf dataset.tar.gz -C ~/storage_megaverse`}
   />
 
   <!-- ── Monitoring ──────────────────────────────────────────────────────────── -->
@@ -169,80 +177,144 @@ tar -xzf dataset.tar.gz -C ~/datasets/private/`}
 
   <CodeBlock
     lang="bash"
-    code={`# CPU, RAM, and per-process stats (interactive, press q to quit)
+    code={`# CPU, RAM, and per-process stats (interactive — press q to quit)
 htop
 
 # Full GPU status: memory usage, utilisation, running processes
 nvidia-smi
 
-# Compact GPU memory summary
-nvidia-smi --query-gpu=index,name,memory.used,memory.free,memory.total \
-           --format=csv,noheader,nounits
+# Find who owns a process by PID
+ps aux | grep surname
 
 # Watch GPU utilisation live every 2 seconds
-watch -n 2 nvidia-smi
-
-# Check available disk space
-df -h /home
-df -h /data    # NAS mount point`}
+watch -n 2 nvidia-smi`}
   />
 
+  <!-- ── tmux ───────────────────────────────────────────────────────────────── -->
+  <h2 id="tmux">Tmux — Persistent Terminal Sessions</h2>
+
   <p>
-    When using <code>htop</code>, press <kbd>F6</kbd> to sort by CPU or memory,
-    <kbd>F5</kbd> to toggle tree view (see which processes belong to which parent),
-    and <kbd>F9</kbd> to send a signal (e.g., to kill a stuck process).
+    Training a neural network can take hours or days. If your SSH connection drops —
+    due to a network hiccup, a laptop going to sleep, or a VPN timeout — any process
+    running directly in your terminal will be killed. <strong>tmux</strong> solves this
+    by running your shell sessions on the server, completely independent of your connection.
+    Detach, close your laptop, and reattach later to find everything exactly as you left it.
   </p>
 
-  <!-- ── File Transfer ──────────────────────────────────────────────────────── -->
-  <h2 id="transfer">Transferring Files</h2>
+  <p>
+    The key concept: <kbd>Ctrl-b</kbd> is the <em>prefix</em> — press it before every
+    tmux shortcut, then release it before pressing the next key.
+    A full cheat sheet is available <a href="https://tmuxcheatsheet.com/" target="_blank" rel="noopener noreferrer">here</a>.
+  </p>
+
+  <h3>Quick start</h3>
+
+  <CodeBlock
+    lang="bash"
+    filename="westworld"
+    code={`# Create a named session (use a meaningful name — your project or experiment)
+tmux new -s resnet_training
+
+# Inside the session, start your experiment as normal
+run-docker 0 0-8 "python train.py"
+
+# Detach — your experiment keeps running on the server
+# Press: Ctrl-b  then  d
+
+# Later, reattach from any SSH session
+tmux attach -t resnet_training`}
+  />
+
+  <h3>Sessions</h3>
+
+  <table>
+    <thead>
+      <tr><th>Action</th><th>Command / Shortcut</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Create a new named session</td><td><code>tmux new -s name</code></td></tr>
+      <tr><td>List all sessions</td><td><code>tmux ls</code></td></tr>
+      <tr><td>Attach to a session</td><td><code>tmux attach -t name</code></td></tr>
+      <tr><td>Detach from current session</td><td><kbd>Ctrl-b</kbd> <kbd>d</kbd></td></tr>
+      <tr><td>Rename current session</td><td><kbd>Ctrl-b</kbd> <kbd>$</kbd></td></tr>
+      <tr><td>Kill a session</td><td><code>tmux kill-session -t name</code></td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout callout-warning">
+    <svg class="w-5 h-5 flex-shrink-0 mt-0.5 text-yellow-500" fill="none" stroke="currentColor"
+         stroke-width="2" viewBox="0 0 24 24">
+      <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+      <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+    </svg>
+    <div class="text-sm leading-relaxed">
+      <strong>Clean up after yourself.</strong> Kill sessions when experiments finish with
+      <code>tmux kill-session -t name</code>.
+    </div>
+  </div>
+
+  <h3>Windows & Panes</h3>
 
   <p>
-    Use <code>scp</code> for quick one-off transfers and <code>rsync</code> for anything
-    larger or incremental (it skips files that haven't changed).
+    A session can contain multiple <em>windows</em> (like browser tabs), and each window
+    can be split into <em>panes</em> (side-by-side or stacked terminals).
+  </p>
+
+  <table>
+    <thead>
+      <tr><th>Action</th><th>Shortcut</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>New window</td><td><kbd>Ctrl-b</kbd> <kbd>c</kbd></td></tr>
+      <tr><td>Switch to window by number</td><td><kbd>Ctrl-b</kbd> <kbd>0–9</kbd></td></tr>
+      <tr><td>Next / previous window</td><td><kbd>Ctrl-b</kbd> <kbd>n</kbd> / <kbd>p</kbd></td></tr>
+      <tr><td>Rename current window</td><td><kbd>Ctrl-b</kbd> <kbd>,</kbd></td></tr>
+      <tr><td>Close current window</td><td><kbd>Ctrl-b</kbd> <kbd>&amp;</kbd></td></tr>
+      <tr><td>Split pane vertically (side by side)</td><td><kbd>Ctrl-b</kbd> <kbd>%</kbd></td></tr>
+      <tr><td>Split pane horizontally (top/bottom)</td><td><kbd>Ctrl-b</kbd> <kbd>"</kbd></td></tr>
+      <tr><td>Move between panes</td><td><kbd>Ctrl-b</kbd> <kbd>↑↓←→</kbd></td></tr>
+      <tr><td>Zoom pane to full screen</td><td><kbd>Ctrl-b</kbd> <kbd>z</kbd></td></tr>
+      <tr><td>Close current pane</td><td><kbd>Ctrl-b</kbd> <kbd>x</kbd></td></tr>
+    </tbody>
+  </table>
+
+  <h3>Configuration</h3>
+
+  <p>
+    <code>tmux</code> is highly customizable. Create a <code>~/.tmux.conf</code> file to set your
+    preferred keybindings, status bar, colors, and more. Here's a sample config to get you started:
   </p>
 
   <CodeBlock
     lang="bash"
-    filename="local machine"
-    code={`# Copy a single file to the server
-scp local_file.py airlab:~/project/
+    filename="~/.tmux.conf"
+    code={`# Enable mouse support (click to select panes/windows, scroll history)
+set -g mouse on
 
-# Copy an entire directory to the server
-scp -r ./results/ airlab:~/project/results/
+# Start window and pane numbering at 1
+set -g base-index 1
+set -g pane-base-index 1
 
-# rsync a directory (faster for large transfers, skips unchanged files)
-rsync -avz --progress ./dataset/ airlab:~/datasets/private/my_dataset/
+# Increase scrollback history
+set -g history-limit 50000
 
-# Download results from the server to your local machine
-rsync -avz airlab:~/project/results/ ./local_results/`}
+# Faster key repetition
+set -sg escape-time 0
+
+# Reload config with: Ctrl-b r
+bind r source-file ~/.tmux.conf \; display-message "Config reloaded"
+
+# Intuitive pane splitting (opens in current directory)
+bind | split-window -h -c "#{pane_current_path}"
+bind - split-window -v -c "#{pane_current_path}"
+
+# Status bar
+set -g status-right '%H:%M %d-%b'
+set -g status-style 'bg=#102c53 fg=white'`}
   />
 
-  <!-- ── Getting Help ────────────────────────────────────────────────────────── -->
-  <h2 id="help">Getting Help</h2>
-
-  <p>
-    Every standard Unix command comes with built-in documentation. The most important
-    ways to access it:
-  </p>
-
-  <CodeBlock
-    lang="bash"
-    code={`# Full manual page (press q to quit, / to search)
-man rsync
-
-# Short usage summary (works for most commands)
-rsync --help
-
-# Quick one-line description of any command
-whatis find
-
-# Search manual pages by keyword
-apropos "compress"`}
-  />
-
-  <p>
-    For questions about the lab specifically, the best resource is always a senior lab
-    member or your co-supervisor. Don't hesitate to ask — everyone started where you are.
-  </p>
+  <CodeBlock lang="bash" code={`# Reload config without restarting tmux
+tmux source-file ~/.tmux.conf
+# Or inside a session: Ctrl-b r`} />
 
 </DocsLayout>

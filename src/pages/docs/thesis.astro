@@ -3,11 +3,13 @@ import DocsLayout from '../../layouts/DocsLayout.astro';
 import CodeBlock from '../../components/CodeBlock.astro';
 
 const toc = [
-  { label: 'Thesis Structure',      id: 'structure' },
+  { label: 'Templates & Formats',      id: 'templates' },
+  { label: 'Thesis Structure',         id: 'structure' },
+  { label: 'Working with Your Advisor',id: 'advisor' },
+  { label: 'Writing Style',            id: 'style' },
+  { label: 'Figures & Bibliography',   id: 'figures' },
 ];
 
-// Curly braces inside template literals are interpreted as JSX expressions in Astro.
-// Store code blocks containing them as plain string variables in the frontmatter.
 const latexBibCode = [
   '% In your preamble',
   '\\usepackage[style=ieee,backend=biber]{biblatex}',
@@ -25,7 +27,119 @@ const latexBibCode = [
 
   <h1>Writing Your Thesis</h1>
 
-  <img src="/mage.png" alt="Making Presentations" style="width: 100%; max-width: 600px; margin: 1.5rem auto; display: block;" />
+  <img src="/mage.png" alt="Writing Your Thesis" style="width: 100%; max-width: 600px; margin: 1.5rem auto; display: block;" />
+
+  <p>
+    A thesis is not a report of everything you did — it is a <strong>coherent scientific argument</strong>.
+    Every chapter, every section, every sentence should serve a single purpose: to convince the reader
+    that you identified a meaningful problem, approached it rigorously, and produced results worth trusting.
+    This guide walks you through the format requirements, structure, advisor relationship, writing conventions,
+    and referencing practices expected at AIRLab.
+  </p>
+
+  <!-- ── Templates & Formats ─────────────────────────────────────────────── -->
+  <h2 id="templates">Templates &amp; Formats</h2>
+
+  <p>
+    All theses must be written in LaTeX using the official Politecnico di Milano templates, available on
+    <a href="https://www.overleaf.com/edu/polimi#templates" target="_blank" rel="noopener">Overleaf (PoliMI templates)</a>.
+    Each template comes in two manuscript formats:
+  </p>
+
+  <table>
+    <thead>
+      <tr><th>Format</th><th>Description</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Classical</strong></td>
+        <td>Traditional book-style structure with full chapters for each section of the thesis outline. Choose this if your work covers multiple contributions or requires extensive background exposition.</td>
+      </tr>
+      <tr>
+        <td><strong>Article</strong></td>
+        <td>Condensed structure modelled on a journal article. Same required content, shorter target length. Writing quality and completeness expectations are identical to the classical format.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>
+    Regardless of the format you choose, the content requirements are the same. The article format is not a "lighter" version of the thesis — it is simply a more concise way to present the same material. The choice between them should be based on which structure better suits your work and writing style, not on perceived effort or page count.
+    Depending on the scope of your thesis, you have different requirements for the final manuscript:
+  </p>
+
+  <table>
+    <thead>
+      <tr><th>Type</th><th>Duration</th><th>Graduation points</th><th>Classical format length</th><th>Article format length</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Full thesis</strong></td>
+        <td>9–12 months</td>
+        <td>up to 7</td>
+        <td>100 pages ± 10 %</td>
+        <td>30 pages ± 10 %</td>
+      </tr>
+      <tr>
+        <td><strong>Short thesis (<em>tesina</em>)</strong></td>
+        <td>~6 months</td>
+        <td>up to 4</td>
+        <td>60–70 pages</td>
+        <td>20–25 pages</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout callout-info">
+    <svg class="w-5 h-5 flex-shrink-0 mt-0.5 text-blue-500" fill="none" stroke="currentColor"
+         stroke-width="2" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="10"/>
+      <line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+    </svg>
+    <div class="text-sm leading-relaxed">
+      Page counts include cover pages and references. Quality matters more than length —
+      write less but coherent, clear, and correct rather than filling pages with unnecessary content.
+    </div>
+  </div>
+
+  <h3>Executive summary</h3>
+
+  <p>
+    Every thesis and tesina must be accompanied by an <strong>executive summary</strong> — a separate
+    6-page document (references included) that summarises the entire thesis: motivation, approach, results,
+    and conclusions. The executive summary is submitted alongside the thesis.
+  </p>
+
+  <!-- ── Thesis Structure ────────────────────────────────────────────────── -->
+  <h2 id="structure">Thesis Structure</h2>
+
+  <p>
+    A thesis is complete when there are results to account for, the manuscript is proofread. The usual structure of the thesis is as follows:
+  </p>
+
+  <ol>
+    <li>
+      <strong>Introduction.</strong> Set the context, state the objectives, summarise the methodology,
+      and preview the main results. A reader should finish this chapter knowing exactly what the thesis
+      is about and why it matters.
+    </li>
+    <li>
+      <strong>State of the Art.</strong> Survey the background knowledge and existing solutions.
+      Identify the gap that motivates your work. Only include work that is directly relevant — do not
+      pad this chapter with loosely related citations.
+    </li>
+    <li>
+      <strong>Proposed Approach.</strong> Present your method with full motivation. Explain why you made
+      the design choices you did. Equations, diagrams, and pseudocode belong here.
+    </li>
+    <li>
+      <strong>Evaluation.</strong> Report quantitative results. Describe your experimental setup in
+      enough detail that the experiments could be replicated. Discuss limitations honestly.
+    </li>
+    <li>
+      <strong>Conclusions.</strong> Summarise your key findings, their significance, and concrete
+      directions for future work.
+    </li>
+  </ol>
 
   <div class="callout callout-warning">
     <svg class="w-5 h-5 flex-shrink-0 mt-0.5 text-yellow-500" fill="none" stroke="currentColor"
@@ -34,8 +148,94 @@ const latexBibCode = [
       <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
     </svg>
     <div class="text-sm leading-relaxed">
-      This page is under construction.
+      Do not repeat the same concept in multiple chapters. Each section should appear exactly once in
+      the logical place where it belongs.
     </div>
   </div>
+
+  <!-- ── Working with Your Advisor ──────────────────────────────────────── -->
+  <h2 id="advisor">Working with Your Advisor</h2>
+
+  <p>
+    Three figures are involved in evaluating your thesis work:
+  </p>
+
+  <ul>
+    <li><strong>Advisor (<em>relatore</em>)</strong> — guides the research direction and ensures scientific quality.</li>
+    <li><strong>Co-advisor (<em>correlatore</em>)</strong> — a PhD student or postdoc providing technical guidance. Your primary point of contact for implementation questions.</li>
+    <li><strong>Discussant (<em>controrelatore</em>)</strong> — an independent professor assigned by the advisor after thesis submission, present at the defence. Their assessment directly affects your final mark. <em>Only required for the full thesis, not the tesina.</em></li>
+  </ul>
+
+  <p>
+    Send chapters to your advisor and co-advisor <strong>one at a time, as soon as they are ready</strong>.
+    Early feedback catches mistakes before they propagate through the rest of the manuscript.
+  </p>
+
+  <!-- ── Writing Style ───────────────────────────────────────────────────── -->
+  <h2 id="style">Writing Style</h2>
+
+  <p>
+    You are encouraged to use LLM assistants (ChatGPT, Claude, etc.) to improve English grammar and scientific style.
+    They are invaluable tools for polishing prose. Needless to say, they are not meant for generating original content.
+    The ideas, claims, results, and citations must all be yours.
+    Always double-check every piece of information an LLM produces: they hallucinate references,
+    misstate facts, and confidently produce plausible-sounding errors.
+  </p>
+
+  <h3>Voice, tense, and tone</h3>
+
+  <ul>
+    <li><strong>First person.</strong> Use "We" (even for single authors) consistently throughout.</li>
+    <li><strong>Present or past tense.</strong> Choose one and stick to it. Reserve the future tense exclusively for the Future Work section.</li>
+    <li><strong>No contractions.</strong> Write "did not" instead of "didn't", "it is" instead of "it's"..</li>
+    <li><strong>Be specific.</strong> Replace vague claims ("the results are good") with quantitative ones ("the method achieves 3.2 % lower error than the baseline").</li>
+    <li><strong>Write positively.</strong> Avoid framing your contribution as a list of things you did not do.</li>
+  </ul>
+
+  <h3>Punctuation and capitalisation</h3>
+
+  <ul>
+    <li>No space before commas, periods, colons, or semicolons.</li>
+    <li>Capitalise proper names and specific numbered elements: "Figure 2.1", "Table 3", "Chapter 4" — but not "the previous section" or "the figure above". Always use the <code>\ref</code> command (no explicit numbering) for referencing figures, tables, and chapters.</li>
+    <li>Equations are part of the sentence and follow normal punctuation rules — end them with a comma or period as required by the surrounding text. This applies for both inline and displayed equations.</li>
+  </ul>
+
+  <h3>Plagiarism</h3>
+
+  <p>
+    Always cite the source for images you did not create yourself, and for any text reproduced verbatim.
+    Use quotation marks for direct quotes. Paraphrasing without citation is still plagiarism.
+  </p>
+
+  <!-- ── Figures & Bibliography ──────────────────────────────────────────── -->
+  <h2 id="figures">Figures &amp; Bibliography</h2>
+
+  <h3>Figures and tables</h3>
+
+  <ul>
+    <li><strong>Placement.</strong> Figures and tables should appear at the top of the page where they are first referenced — never before.</li>
+    <li><strong>Vector formats.</strong> Use PDF or SVG for all plots and diagrams. If you must use raster formats (PNG, JPEG), ensure a resolution of at least 300 DPI at the printed size.</li>
+    <li><strong>Self-contained figures.</strong> Every axis must have a label with units. Every line or bar must appear in a legend. A reader should be able to understand a figure without hunting through the surrounding text.</li>
+    <li>
+      <strong>Captions.</strong> Write a descriptive caption that explains what the figure shows and what to take away from it.
+      Use the two-argument form so the list of figures stays readable:
+      <CodeBlock code={`\\caption[Short caption for the list of figures or tables]{Full description of what the figure shows and what the reader should take away.}`} lang="latex" />
+    </li>
+  </ul>
+
+  <h3>Bibliography</h3>
+
+  <p>
+    Every bibliography entry must include: authors, title, venue (journal name or conference proceedings),
+    year, and publisher.
+    To get the BibTeX entry for a paper:
+  </p>
+
+  <ol>
+    <li>Search for the paper on <a href="https://scholar.google.com" target="_blank" rel="noopener">Google Scholar</a>.</li>
+    <li>Click the <strong>Cite</strong> button (") below the result.</li>
+    <li>Click <strong>BibTeX</strong> at the bottom of the dialog.</li>
+    <li>Copy the entry into your <code>.bib</code> file.</li>
+  </ol>
 
 </DocsLayout>

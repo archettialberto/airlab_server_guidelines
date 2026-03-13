@@ -23,7 +23,7 @@ const toc = [
   <p>
     Docker is mandatory for all experiments on AIRLab servers. It is not optional, and
     it is not just for production code. Running experiments inside containers ensures
-    that every result is reproducible — by you six months from now, by your co-supervisor,
+    that every result is isolated and reproducible — by you six months from now, by your co-supervisor,
     and by any future lab member who builds on your work.
   </p>
 
@@ -39,8 +39,8 @@ const toc = [
   <ul>
     <li><strong>Isolation</strong> — your dependencies cannot interfere with anyone else's, and vice versa.</li>
     <li><strong>Reproducibility</strong> — pin every dependency to an exact version; anyone can rebuild the same environment from scratch.</li>
-    <li><strong>Portability</strong> — the same container runs on Westworld, a cloud VM, or your laptop (CPU-only).</li>
-    <li><strong>Clean servers</strong> — no global package pollution; the server OS stays pristine.</li>
+    <li><strong>Portability</strong> — the same container runs on Westworld, a cloud VM, or your laptop.</li>
+    <li><strong>Clean servers</strong> — no global package pollution;.</li>
   </ul>
 
   <p>The standard development cycle is:</p>
@@ -67,65 +67,64 @@ const toc = [
     filename="my_project/"
     code={`my_project/
 ├── src/                   # your source code
+│   ├── __init__.py
 │   ├── train.py
-│   ├── evaluate.py
-│   └── models/
-├── configs/               # YAML/JSON configuration files
+│   └── evaluate.py
+├── configs/               # YAML/JSON configuration files, if any
 │   └── default.yaml
-├── docker/
-│   ├── Dockerfile
-│   └── build.sh           # convenience build script
+├── Dockerfile
 ├── requirements.txt       # Python dependencies (pinned versions)
-├── run.sh                 # convenience run script (wraps docker run)
+├── .rundocker             # Docker run options
 ├── .gitignore
 └── README.md              # setup & usage instructions`}
   />
-
-  <p>
-    Keep a <code>build.sh</code> and a <code>run.sh</code> in the repo so every
-    collaborator uses the exact same flags — no more "it worked on my machine" because
-    someone forgot a mount or an environment variable.
-  </p>
 
   <!-- ── Dockerfile ─────────────────────────────────────────────────────────── -->
   <h2 id="dockerfile">Writing a Dockerfile</h2>
 
   <p>
+    A Dockerfile is a script that describes how to build a Docker image. It consists of
+    a series of instructions (e.g., <code>FROM</code>, <code>RUN</code>, <code>COPY</code>) 
+    that are executed in order.
+  </p>
+
+  <p>
+    The following is an example Dockerfile for a PyTorch project.
     Start from an official NVIDIA base image that bundles CUDA and cuDNN. Pick the
-    version that matches the CUDA toolkit installed on Westworld (ask your co-supervisor
-    or run <code>nvidia-smi</code> and check the top-right CUDA version).
+    version that matches the CUDA toolkit installed on the server 
+    (run <code>nvidia-smi</code> and check the top-right CUDA version).
   </p>
 
   <CodeBlock
     lang="dockerfile"
-    filename="docker/Dockerfile"
+    filename="Dockerfile"
     code={`# ── Base image ────────────────────────────────────────────
 # Browse available tags at: https://hub.docker.com/r/nvidia/cuda/tags
 FROM nvidia/cuda:12.1.0-cudnn8-runtime-ubuntu22.04
 
 # ── System dependencies ───────────────────────────────────
-RUN apt-get update && apt-get install -y --no-install-recommends \
-      python3.11 \
-      python3.11-venv \
-      python3-pip \
-      git \
-      libgl1 \
-      libglib2.0-0 \
+RUN apt-get update && apt-get install -y --no-install-recommends \\
+      python3.11 \\
+      python3.11-venv \\
+      python3-pip \\
+      git \\
+      libgl1 \\
+      libglib2.0-0 \\
     && rm -rf /var/lib/apt/lists/*
 
 # ── Python environment ────────────────────────────────────
-WORKDIR /workspace
+WORKDIR /exp
 COPY requirements.txt .
 
-RUN pip install --no-cache-dir --upgrade pip \
+RUN pip install --no-cache-dir --upgrade pip \\
     && pip install --no-cache-dir -r requirements.txt
 
 # ── Project code ──────────────────────────────────────────
-COPY src/ ./src/
-COPY configs/ ./configs/
+# Note: you don't need to copy your code into the image as the code is mounted 
+# from outside at runtime with the run-docker command.
+# run-docker will mount your current directory into the /exp folder inside the container.
 
-# Default command (override at runtime)
-CMD ["python3", "src/train.py"]`}
+CMD ["bash"]`}
   />
 
   <p>
@@ -155,20 +154,11 @@ tensorboard==2.16.2`}
     lang="bash"
     filename="westworld — project root"
     code={`# Build the image. Convention: <username>/<project>:<version>
-docker build --rm -t lastname/my_project:v1 -f docker/Dockerfile .
+docker build --rm -t lastname/my_project:v1 .
 
 # Verify the image was built
-docker images | grep my_project
-
-# Remove dangling images (untagged build cache)
-docker image prune`}
+docker images | grep my_project`}
   />
-
-  <p>
-    The <code>--rm</code> flag removes intermediate containers after the build, keeping the
-    server tidy. Rebuild whenever you change <code>Dockerfile</code> or
-    <code>requirements.txt</code>.
-  </p>
 
   <!-- ── Running ────────────────────────────────────────────────────────────── -->
   <h2 id="running">Running Containers</h2>
@@ -176,90 +166,9 @@ docker image prune`}
   <p>
     AIRLab servers provide a helper script called <code>run-docker</code> that wraps
     <code>docker run</code> with sensible defaults (GPU assignment, directory mounts,
-    user permissions). Ask your co-supervisor how to obtain it.
-  </p>
-
-  <CodeBlock
-    lang="bash"
-    filename="westworld"
-    code={`# Usage: run-docker <gpu_indices> <cpu_cores> <command...>
-# Example: GPU 0, 4 CPU cores, run training
-run-docker 0 4 python3 src/train.py --config configs/default.yaml
-
-# Two GPUs (0 and 1), 8 cores
-run-docker 0,1 8 python3 src/train_multi_gpu.py
-
-# Interactive bash shell for debugging
-run-docker 0 4 bash`}
-  />
-
-  <p>
-    If <code>run-docker</code> is not yet available, here is the equivalent raw Docker
-    command with all flags explained:
-  </p>
-
-  <CodeBlock
-    lang="bash"
-    filename="westworld"
-    code={`# Get your UID and GID (needed to avoid root-owned output files)
-id lastname
-# example output: uid=1085(lastname) gid=20002(users) ...
-
-docker run \\
-  -d \\                                           # run in background (detached)
-  --rm \\                                         # auto-remove container when it exits
-  -it \\                                          # allocate a pseudo-TTY
-  --gpus '"device=7"' \\                          # assign GPU 7
-  --cpuset-cpus 104-111 \\                        # assign CPU cores 104–111
-  -u 1085:20002 \\                                # run as your user (uid:gid)
-  -e HOST_UID=1085 -e HOST_GID=20002 \\          # pass uid/gid as env vars
-  -w /workspace \\                               # set working directory inside container
-  --mount type=bind,source=/home/lastname/storage/project,target=/workspace \\
-  --mount type=bind,source=/home/lastname/dataset/private,target=/workspace/datasets \\
-  --name lastname_my_project \\                   # name the container
-  lastname/my_project:v1 \\                       # image to use
-  python3 src/train.py`}
-  />
-
-  <p>
-    Key flags to remember:
-  </p>
-
-  <table>
-    <thead>
-      <tr><th>Flag</th><th>Purpose</th></tr>
-    </thead>
-    <tbody>
-      <tr><td><code>-d</code></td><td>Detach — container runs in background</td></tr>
-      <tr><td><code>--rm</code></td><td>Remove container automatically when it stops</td></tr>
-      <tr><td><code>-it</code></td><td>Keep a terminal attached (needed for interactive use)</td></tr>
-      <tr><td><code>--gpus</code></td><td>Assign specific GPUs (must match booked resources)</td></tr>
-      <tr><td><code>--cpuset-cpus</code></td><td>Restrict to specific CPU cores</td></tr>
-      <tr><td><code>-u uid:gid</code></td><td>Run as your user so output files are owned by you</td></tr>
-      <tr><td><code>--mount</code></td><td>Bind-mount a host directory into the container</td></tr>
-      <tr><td><code>--name</code></td><td>Give the container a recognisable name</td></tr>
-    </tbody>
-  </table>
-
-  <CodeBlock
-    lang="bash"
-    filename="westworld"
-    code={`# Useful container management commands
-docker ps                           # list running containers
-docker ps | grep lastname           # filter to yours
-docker exec -it CONTAINER_ID bash   # attach a shell to a running container
-docker logs CONTAINER_ID            # view container output
-docker stop CONTAINER_ID            # stop a running container
-docker rm   CONTAINER_ID            # remove a stopped container
-docker rmi  lastname/my_project:v1  # delete an image`}
-  />
-
-  <!-- ── Run Configs ─────────────────────────────────────────────────────────── -->
-  <h2 id="runconfigs">Run Configurations (.runconfig)</h2>
-
-  <p>
-    The <code>.runconfig</code> file lets you declare persistent options for
-    <code>run-docker</code> without repeating them on the command line every time.
+    user permissions).
+    <code>run-docker</code> requires the definition of a <code>.runconfig</code> file in your 
+    project root as follows:
   </p>
 
   <CodeBlock
@@ -277,6 +186,47 @@ docker rmi  lastname/my_project:v1  # delete an image`}
 # Set environment variables
 -e WANDB_API_KEY=your_key_here
 -e PYTHONPATH=/workspace/src`}
+  />
+
+  <p>
+    This is how to run containers with <code>run-docker</code>:
+  </p>
+
+  <CodeBlock
+    lang="bash"
+    filename="westworld"
+    code={`# Usage: run-docker <gpu_indices> <cpu_cores> <command...>
+# Example: GPU 0, 4 CPU cores, run training
+run-docker 0 4 python3 src/train.py --config configs/default.yaml
+
+# Two GPUs (0 and 1), 8 cores
+run-docker 0,1 8 python3 src/train_multi_gpu.py
+
+# Interactive bash shell for debugging on GPU 0, 12 non-contiguous cores
+run-docker 0 4-8,16-24 bash
+
+# Interactive bash shell with no GPU
+run-docker '' 4-8,16-24 bash
+
+# Interactive bash shell with no GPU on ALL CPUs
+run-docker '' '' bash`}
+  />
+
+  <p>
+    Useful Docker commands for managing containers and images:
+  </p>
+
+  <CodeBlock
+    lang="bash"
+    filename="westworld"
+    code={`# Useful container management commands
+docker ps                           # list running containers
+docker ps | grep lastname           # filter to yours
+docker exec -it CONTAINER_ID bash   # attach a shell to a running container
+docker logs CONTAINER_ID            # view container output
+docker stop CONTAINER_ID            # stop a running container
+docker rm   CONTAINER_ID            # remove a stopped container
+docker rmi  lastname/my_project:v1  # delete an image`}
   />
 
   <!-- ── VS Code Integration ────────────────────────────────────────────────── -->

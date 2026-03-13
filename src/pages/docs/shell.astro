@@ -1,6 +1,7 @@
 ---
 import DocsLayout from '../../layouts/DocsLayout.astro';
 import CodeBlock from '../../components/CodeBlock.astro';
+import OsCodeBlock from '../../components/OsCodeBlock.astro';
 
 const toc = [
   { label: 'Connecting via SSH',    id: 'ssh' },
@@ -8,7 +9,7 @@ const toc = [
   { label: 'GitHub on the Server',  id: 'github' },
   { label: 'Navigation & Files',    id: 'navigation' },
   { label: 'Monitoring Resources',  id: 'monitoring' },
-  { label: 'tmux',                  id: 'tmux' },
+  { label: 'Tmux',                  id: 'tmux' },
 ];
 ---
 
@@ -30,26 +31,35 @@ const toc = [
     your system's hosts file as memorable aliases:
   </p>
 
-  <CodeBlock
+  <OsCodeBlock
     lang="text"
-    filename="/etc/hosts"
-    code={`# AIRLab servers — replace with actual IPs from your co-supervisor
+    linuxFilename="/etc/hosts"
+    windowsFilename={`C:\\Windows\\System32\\drivers\\etc\\hosts`}
+    linuxCode={`# AIRLab servers — replace with actual IPs from your co-supervisor
 <WESTWORLD_IP>   westworld ww
 <ELYSIUM_IP>     elysium   ely`}
   />
+
+  <p data-os-content="windows">
+    <strong>Note:</strong> You cannot directly overwrite this file with Notepad.
+    Save the edited file anywhere on your desktop, then drag and drop it into
+    <code>C:\Windows\System32\drivers\etc\</code> to overwrite it
+    (administrator permission required).
+  </p>
 
   <p>
     Then configure your SSH client to handle usernames and key selection automatically.
     Add the following to your SSH config file (create it if it doesn't exist):
   </p>
 
-  <CodeBlock
+  <OsCodeBlock
     lang="text"
-    filename="~/.ssh/config"
-    code={`# Westworld
+    linuxFilename="~/.ssh/config"
+    windowsFilename={`C:\\Users\\YourName\\.ssh\\config`}
+    linuxCode={`# Westworld
 Host ww westworld
   HostName westworld
-  User lastname
+  User lastname    <-- replace with your actual username on the server
   IdentityFile ~/.ssh/id_ed25519_airlab
   ServerAliveInterval 60
   ServerAliveCountMax 3
@@ -57,7 +67,7 @@ Host ww westworld
 # Elysium
 Host ely elysium
   HostName elysium
-  User lastname
+  User lastname    <-- replace with your actual username on the server
   IdentityFile ~/.ssh/id_ed25519_airlab
   ServerAliveInterval 60
   ServerAliveCountMax 3`}
@@ -91,18 +101,30 @@ ssh ely     # elysium`} />
     Set up an SSH key pair once and never type your password over the network again.
   </p>
 
-  <CodeBlock
+  <OsCodeBlock
     lang="bash"
-    filename="local machine"
-    code={`# 1. Generate a key pair (Ed25519 is the modern standard)
-ssh-keygen -t ed25519 -C "airlab-$(date +%Y)" -f ~/.ssh/id_ed25519_airlab
+    linuxFilename="local machine"
+    windowsFilename="local machine"
+    linuxCode={`# 1. Generate a key pair (Ed25519 is the modern standard)
+# The -C comment is optional but helps identify the key later
+ssh-keygen -t ed25519 -C "airlab" -f ~/.ssh/id_ed25519_airlab
 
 # 2. Copy the public key to every server you use
 ssh-copy-id -i ~/.ssh/id_ed25519_airlab.pub lastname@<westworld_ip>
 ssh-copy-id -i ~/.ssh/id_ed25519_airlab.pub lastname@<elysium_ip>
 
 # 3. Test key login — no password prompt means it worked
-ssh -i ~/.ssh/id_ed25519_airlab lastname@<westworld_ip> whoami`}
+ssh ww`}
+    windowsCode={`# 1. Generate a key pair (Ed25519 is the modern standard)
+# The -C comment is optional but helps identify the key later
+ssh-keygen -t ed25519 -C "airlab" -f C:\\Users\\YourName\\.ssh\\id_ed25519_airlab
+
+# 2. Windows does not have ssh-copy-id — use PowerShell instead
+type C:\\Users\\YourName\\.ssh\\id_ed25519_airlab.pub | ssh lastname@<westworld_ip> "mkdir -p .ssh && cat >> .ssh/authorized_keys"
+type C:\\Users\\YourName\\.ssh\\id_ed25519_airlab.pub | ssh lastname@<elysium_ip> "mkdir -p .ssh && cat >> .ssh/authorized_keys"
+
+# 3. Test key login — no password prompt means it worked
+ssh ww`}
   />
 
   <!-- ── GitHub on the Server ────────────────────────────────────────────────── -->
@@ -183,7 +205,7 @@ htop
 # Full GPU status: memory usage, utilisation, running processes
 nvidia-smi
 
-# Find who owns a process by PID
+# Find who owns a process by surname
 ps aux | grep surname
 
 # Watch GPU utilisation live every 2 seconds

@@ -1,0 +1,206 @@
+---
+/**
+ * OsCodeBlock — Like CodeBlock, but with a Linux/macOS ↔ Windows toggle.
+ *
+ * Both code variants are rendered server-side (Shiki highlights both).
+ * A body[data-preferred-os] attribute drives show/hide via CSS — no conflict
+ * with inline styles. Any element anywhere on the page with data-os-content="linux"
+ * or data-os-content="windows" is controlled by the same global toggle.
+ *
+ * Props:
+ *   lang              (required) Language for Shiki
+ *   linuxCode         (required) Code shown for Linux / macOS
+ *   windowsCode       (optional) Code shown for Windows — defaults to linuxCode
+ *   linuxFilename     (optional) Filename label for Linux
+ *   windowsFilename   (optional) Filename label for Windows
+ */
+import { Code } from 'astro:components';
+
+interface Props {
+  lang: string;
+  linuxCode: string;
+  windowsCode?: string;
+  linuxFilename?: string;
+  windowsFilename?: string;
+}
+
+const {
+  lang,
+  linuxCode,
+  windowsCode = linuxCode,
+  linuxFilename,
+  windowsFilename = linuxFilename,
+} = Astro.props;
+
+const linuxEncoded   = Buffer.from(linuxCode).toString('base64');
+const windowsEncoded = Buffer.from(windowsCode).toString('base64');
+
+const sameFilename = linuxFilename === windowsFilename;
+---
+
+{/* Set body attribute immediately (before the elements below appear in the DOM)
+    so the CSS rules below hide the right content from the very first paint. */}
+<script is:inline>
+  document.body.dataset.preferredOs =
+    localStorage.getItem('airlab-preferred-os') || 'linux';
+</script>
+
+<div class="code-block not-prose my-6 rounded-xl overflow-hidden border border-code-border shadow-lg">
+
+  <!-- ── Header ──────────────────────────────────────────────────────────── -->
+  <div class="code-header flex items-center gap-3 px-4 py-3"
+       style="background-color: var(--code-header);">
+
+    <!-- Traffic-light dots -->
+    <div class="flex items-center gap-1.5 shrink-0" aria-hidden="true">
+      <span class="window-dot" style="background:#ff5f56"></span>
+      <span class="window-dot" style="background:#ffbd2e"></span>
+      <span class="window-dot" style="background:#27c93f"></span>
+    </div>
+
+    <!-- Filename badge (OS-sensitive) -->
+    {(linuxFilename || windowsFilename) && (
+      <span class="flex-1 text-center text-xs font-mono text-gray-400 truncate">
+        {sameFilename ? (
+          <span>{linuxFilename}</span>
+        ) : (
+          <>
+            {linuxFilename   && <span data-os-content="linux">{linuxFilename}</span>}
+            {windowsFilename && <span data-os-content="windows">{windowsFilename}</span>}
+          </>
+        )}
+      </span>
+    )}
+    {!(linuxFilename || windowsFilename) && <span class="flex-1" />}
+
+    <!-- OS toggle pills -->
+    <div class="flex items-center rounded border border-gray-600 text-xs font-medium shrink-0 overflow-hidden">
+      <button class="os-toggle-btn px-2.5 py-1" data-os-btn="linux">Linux / macOS</button>
+      <button class="os-toggle-btn px-2.5 py-1 border-l border-gray-600" data-os-btn="windows">Windows</button>
+    </div>
+
+    <!-- Copy button (copies the active variant) -->
+    <button
+      class="os-copy-btn text-xs font-medium px-2.5 py-1 rounded transition-all duration-150
+             text-gray-400 hover:text-white border border-gray-600 hover:border-gray-400
+             active:scale-95 shrink-0"
+      data-linux-code={linuxEncoded}
+      data-windows-code={windowsEncoded}
+      aria-label="Copy code"
+    >Copy</button>
+  </div>
+
+  <!-- ── Code panels ─────────────────────────────────────────────────────── -->
+  <div class="relative" style="background-color: var(--code-bg);">
+    {lang && (
+      <span class="absolute top-2 right-3 text-xs font-mono opacity-40 text-gray-300 select-none">
+        {lang}
+      </span>
+    )}
+
+    <div data-os-content="linux">
+      <Code code={linuxCode}   lang={lang} theme="github-dark"
+            class="!bg-transparent !m-0 !rounded-none text-sm leading-relaxed" />
+    </div>
+    <div data-os-content="windows">
+      <Code code={windowsCode} lang={lang} theme="github-dark"
+            class="!bg-transparent !m-0 !rounded-none text-sm leading-relaxed" />
+    </div>
+  </div>
+</div>
+
+<!-- ── Module script (bundled once even when component is used multiple times) ── -->
+<script>
+  const OS_KEY = 'airlab-preferred-os';
+
+  function applyOS(os: string) {
+    localStorage.setItem(OS_KEY, os);
+    document.body.dataset.preferredOs = os; // CSS drives the show/hide
+
+    document.querySelectorAll<HTMLButtonElement>('[data-os-btn]').forEach(btn => {
+      const active = btn.dataset.osBtn === os;
+      btn.style.color      = active ? 'white'                  : '';
+      btn.style.background = active ? 'rgba(255,255,255,0.12)' : '';
+    });
+  }
+
+  // Initialise from stored preference
+  applyOS(localStorage.getItem(OS_KEY) ?? 'linux');
+
+  document.addEventListener('click', async (e) => {
+    // OS toggle button
+    const osBtn = (e.target as HTMLElement).closest<HTMLButtonElement>('[data-os-btn]');
+    if (osBtn?.dataset.osBtn) {
+      applyOS(osBtn.dataset.osBtn);
+      return;
+    }
+
+    // OS-aware copy button
+    const copyBtn = (e.target as HTMLElement).closest<HTMLButtonElement>('.os-copy-btn');
+    if (!copyBtn) return;
+
+    const os      = localStorage.getItem(OS_KEY) ?? 'linux';
+    const encoded = os === 'windows'
+      ? (copyBtn.dataset.windowsCode ?? '')
+      : (copyBtn.dataset.linuxCode   ?? '');
+
+    try {
+      await navigator.clipboard.writeText(atob(encoded));
+      copyBtn.textContent       = 'Copied!';
+      copyBtn.style.color       = '#4ade80';
+      copyBtn.style.borderColor = '#4ade80';
+    } catch {
+      copyBtn.textContent = 'Error';
+    } finally {
+      setTimeout(() => {
+        copyBtn.textContent       = 'Copy';
+        copyBtn.style.color       = '';
+        copyBtn.style.borderColor = '';
+      }, 2000);
+    }
+  });
+</script>
+
+<style>
+  /*
+   * CSS-driven show/hide via body attribute set by the inline script above.
+   * Using :global() so selectors target elements anywhere on the page
+   * (including data-os-content nodes outside this component, e.g. callout notes).
+   *
+   * Default (no attribute / linux): hide windows content.
+   * Windows selected: hide linux content.
+   */
+  :global(body:not([data-preferred-os="windows"]) [data-os-content="windows"]) {
+    display: none;
+  }
+  :global(body[data-preferred-os="windows"] [data-os-content="linux"]) {
+    display: none;
+  }
+
+  .window-dot {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .os-toggle-btn {
+    cursor: pointer;
+    color: #9ca3af;
+    background: transparent;
+    transition: color 0.15s, background 0.15s;
+  }
+  .os-toggle-btn:hover { color: #e5e7eb; }
+
+  .code-block :global(pre) {
+    margin: 0 !important;
+    border-radius: 0 !important;
+    padding: 1.1em 1.25em !important;
+    background-color: var(--code-bg) !important;
+    font-family: 'JetBrains Mono', 'Fira Code', monospace !important;
+    font-size: 0.875rem !important;
+    line-height: 1.65 !important;
+    overflow-x: auto;
+  }
+</style>

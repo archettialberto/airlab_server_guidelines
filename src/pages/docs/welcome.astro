@@ -96,11 +96,6 @@ const toc = [
     </tbody>
   </table>
 
-  <p>
-    Files stored on <code>megaverse</code> are accessible from every compute server
-    through symlinks in your home directory — see the <a href="#directories">Directory Layout</a> section below.
-  </p>
-
   <!-- ── Directory Layout ───────────────────────────────────────────────────── -->
   <h2 id="directories">Directory Layout</h2>
 
@@ -114,13 +109,12 @@ const toc = [
     lang="text"
     filename="/home/lastname/ (on any compute server)"
     code={`/home/lastname/
-├── storage/                 → legacy symlink to /multiverse/storage/lastname/ (deprecated, use storage_megaverse instead)
-└── storage_megaverse/       → /megaverse/storage/lastname/      ← put your code and datasets here`}
+├── ...
+└── storage    → /megaverse/storage/lastname/      ← put your code and datasets here`}
   />
 
   <p>
-    Keep your home directory itself light. Use <code>~/storage_megaverse/</code> for project code
-    and for large datasets.
+    Keep your home directory itself light. Use <code>~/storage/</code> for project code, large datasets, and model checkpoints.
   </p>
 
   <div class="callout callout-warning">
@@ -148,7 +142,7 @@ const toc = [
     lang="bash"
     filename="local machine"
     code={`# IP addresses are internal — ask your co-supervisor for them
-ssh lastname@<<server ip>`}
+ssh lastname@<server ip>`}
   />
 
   <p>
@@ -166,7 +160,7 @@ ssh lastname@<<server ip>`}
   <p>
     After logging in, switch to <strong>SSH key authentication</strong> to avoid
     typing passwords. See the
-    <a href="/docs/shell#ssh-keys">SSH Keys section</a> in the Shell guide.
+    <a href="/docs/shell#ssh">SSH</a> in the Shell guide.
   </p>
 
   <!-- ── Core Responsibilities ──────────────────────────────────────────────── -->
@@ -191,11 +185,11 @@ ssh lastname@<<server ip>`}
       </tr>
       <tr>
         <td><strong>Respect storage limits</strong></td>
-        <td>Your home directory is capped at <strong>20 GB</strong>. Code goes in <code>~/storage/</code>; datasets go in <code>~/dataset/private/</code> — both are symlinks to the NAS.</td>
+        <td>Your home directory is capped at <strong>20 GB</strong>. Most of your files should go in <code>~/storage/</code>.</td>
       </tr>
       <tr>
         <td><strong>Version your code on Git</strong></td>
-        <td>All project code lives in a private GitHub repository with your co-supervisors added as members.</td>
+        <td>All project code must live in a private GitHub repository with your co-supervisors added as members.</td>
       </tr>
       <tr>
         <td><strong>Document your work</strong></td>

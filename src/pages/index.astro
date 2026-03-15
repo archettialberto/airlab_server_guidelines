@@ -136,7 +136,7 @@ const sections = [
             <ul class="flex-1 px-8 py-5 space-y-1.5">
               {s.items.map((item, i) => (
                 <li>
-                  <a href={item.href}
+                  <a href={`${import.meta.env.BASE_URL}${item.href.replace(/^\//, '')}`}
                      class="flex items-center gap-3 text-sm text-gray-600
                             hover:text-accent-800 transition-colors group/link py-1">
                     <span class="text-xs font-mono text-gray-300 w-4 text-right flex-shrink-0">
@@ -154,7 +154,7 @@ const sections = [
 
             <!-- CTA -->
             <div class="px-8 pb-7">
-              <a href={s.href}
+              <a href={`${import.meta.env.BASE_URL}${s.href.replace(/^\//, '')}`}
                  class="inline-flex items-center gap-2 text-sm font-bold text-accent-800
                         hover:text-accent-600 transition-colors">
                 {s.cta}

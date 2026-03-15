@@ -14,7 +14,7 @@ const toc = [
 
   <h1>Thesis Dissertation</h1>
 
-  <img src="/dissertation.png" alt="Thesis Dissertation" style="width: 100%; max-width: 600px; margin: 1.5rem auto; display: block;" />
+  <img src={`${import.meta.env.BASE_URL}dissertation.png`} alt="Thesis Dissertation" style="width: 100%; max-width: 600px; margin: 1.5rem auto; display: block;" />
 
   <p>
     Alas, you have finally made it. After months of literature reviews, failed experiments, late-night
@@ -89,7 +89,7 @@ const toc = [
 
   <p>
     When designing your slides, keep all the principles from the
-    <a href="/docs/presentations">presentation guide</a> firmly in mind:
+    <a href={`${import.meta.env.BASE_URL}docs/presentations`}>presentation guide</a> firmly in mind:
     one idea per slide, visuals over walls of text, a clear narrative arc (motivation → gap → method → results),
     and a closing slide that people will actually want to look at during questions.
   </p>

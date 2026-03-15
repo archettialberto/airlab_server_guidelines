@@ -3,6 +3,6 @@ import tailwind from '@astrojs/tailwind';
 
 export default defineConfig({
   integrations: [tailwind()],
-  // Uncomment and set `base` when deploying to a sub-path:
-  // base: '/server-guide',
+  site: 'https://archettialberto.github.io',
+  base: '/airlab_server_guidelines',
 });

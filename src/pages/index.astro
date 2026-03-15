@@ -59,7 +59,7 @@ const sections = [
         <!-- ① Logo lockup ──────────────────────────────────────────────────── -->
         <!-- DEIB Bandiera already contains the Polimi seal + DEIB name -->
         <div class="mb-12">
-          <img src="/logos/deib-white.png"
+          <img src={`${import.meta.env.BASE_URL}logos/deib-white.png`}
                alt="Politecnico di Milano — Department of Electronics, Information and Bioengineering"
                class="h-16 w-auto opacity-85" />
         </div>
@@ -81,7 +81,7 @@ const sections = [
 
         <!-- ⑤ CTAs ─────────────────────────────────────────────────────────── -->
         <div class="flex flex-col sm:flex-row gap-3">
-          <a href="/docs/welcome"
+          <a href={`${import.meta.env.BASE_URL}docs/welcome`}
              class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold text-sm
                     bg-white/10 border border-white/20 text-white hover:bg-white/20 transition-colors">
             Server Guide
@@ -89,7 +89,7 @@ const sections = [
               <path d="M5 12h14M12 5l7 7-7 7"/>
             </svg>
           </a>
-          <a href="/docs/research"
+          <a href={`${import.meta.env.BASE_URL}docs/research`}
              class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold text-sm
                     bg-white/10 border border-white/20 text-white hover:bg-white/20 transition-colors">
             Thesis Guide
@@ -216,8 +216,8 @@ const sections = [
           <div>
             <p class="text-xs font-bold uppercase tracking-widest text-white mb-4">Resources</p>
             <ul class="space-y-2 text-xs">
-              <li><a href="/docs/welcome" class="hover:text-white transition-colors">Server Guide</a></li>
-              <li><a href="/docs/research" class="hover:text-white transition-colors">Thesis Guide</a></li>
+              <li><a href={`${import.meta.env.BASE_URL}docs/welcome`} class="hover:text-white transition-colors">Server Guide</a></li>
+              <li><a href={`${import.meta.env.BASE_URL}docs/research`} class="hover:text-white transition-colors">Thesis Guide</a></li>
               <li><a href="https://airlab.deib.polimi.it/" target="_blank" rel="noopener" class="hover:text-white transition-colors">AIRLab Website</a></li>
             </ul>
           </div>

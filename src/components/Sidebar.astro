@@ -5,10 +5,11 @@ interface Props {
   currentPath?: string;
 }
 const { currentPath = '' } = Astro.props;
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 
 function isActive(href: string): boolean {
-  // Strip trailing slash for comparison
-  const clean = currentPath.replace(/\/$/, '');
+  // Strip base prefix and trailing slash for comparison
+  const clean = currentPath.replace(/\/$/, '').replace(base, '');
   return clean === href || clean === href + '/index';
 }
 ---
@@ -34,7 +35,7 @@ function isActive(href: string): boolean {
             return (
               <li>
                 <a
-                  href={item.href}
+                  href={`${base}${item.href}`}
                   class:list={[
                     'flex items-center gap-2 text-sm px-3 py-2 rounded-lg transition-all duration-100 font-medium',
                     active

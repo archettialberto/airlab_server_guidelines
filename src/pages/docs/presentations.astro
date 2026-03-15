@@ -14,7 +14,7 @@ const toc = [
 
   <h1>Making Presentations</h1>
 
-  <img src="/presentations.png" alt="Making Presentations" style="width: 100%; max-width: 600px; margin: 1.5rem auto; display: block;" />
+  <img src={`${import.meta.env.BASE_URL}presentations.png`} alt="Making Presentations" style="width: 100%; max-width: 600px; margin: 1.5rem auto; display: block;" />
 
   <p>
     A scientific presentation is not a paper you read aloud. It is a <strong>performance</strong> — a curated,
@@ -29,7 +29,7 @@ const toc = [
       <line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
     </svg>
     <div class="text-sm leading-relaxed">
-      Use DEIB's official slide template: <a href="/template-deib-2024.pptx" download><strong>template-deib-2024.pptx</strong></a>.
+      Use DEIB's official slide template: <a href={`${import.meta.env.BASE_URL}template-deib-2024.pptx`} download><strong>template-deib-2024.pptx</strong></a>.
     </div>
   </div>
 

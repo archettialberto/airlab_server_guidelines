@@ -12,7 +12,7 @@ const { currentPath = '' } = Astro.props;
     <div class="flex items-center justify-between h-16">
 
       <!-- Logo / Site name -->
-      <a href="/" class="flex items-center gap-3 group">
+      <a href={import.meta.env.BASE_URL} class="flex items-center gap-3 group">
         <div class="w-9 h-9 rounded-lg bg-accent-800 flex items-center justify-center
                     group-hover:bg-accent-700 transition-colors flex-shrink-0">
           <!-- Compass / atlas icon -->
@@ -37,7 +37,7 @@ const { currentPath = '' } = Astro.props;
       <nav class="hidden md:flex items-center gap-1">
         {NAV.map((section) => (
           <a
-            href={section.items[0].href}
+            href={`${import.meta.env.BASE_URL}${section.items[0].href.replace(/^\//, '')}`}
             class="text-sm px-3 py-2 rounded-lg font-semibold transition-colors
                    text-gray-600 hover:text-accent-800 hover:bg-accent-50"
           >

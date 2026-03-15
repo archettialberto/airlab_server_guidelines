@@ -1,0 +1,138 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+
+const toc = [
+  { label: 'Timing and Slide Count',  id: 'timing' },
+  { label: 'Composure',               id: 'composure' },
+  { label: 'Telling Your Story',      id: 'story' },
+  { label: 'Backup Slides',           id: 'backup' },
+  { label: 'Rehearsal',               id: 'rehearsal' },
+];
+---
+
+<DocsLayout title="Thesis Dissertation" toc={toc}>
+
+  <h1>Thesis Dissertation</h1>
+
+  <img src={`${import.meta.env.BASE_URL}dissertation.png`} alt="Thesis Dissertation" style="width: 100%; max-width: 600px; margin: 1.5rem auto; display: block;" />
+
+  <p>
+    Alas, you have finally made it. After months of literature reviews, failed experiments, late-night
+    debugging sessions, and at least one existential crisis, you are standing at the finish line.
+    This page will help you cross it with style.
+  </p>
+
+  <!-- ── Timing and Slide Count ─────────────────────────────────────────────── -->
+  <h2 id="timing">Timing and Slide Count</h2>
+
+  <p>
+    The graduation committee has a tight schedule. Respecting your time slot is not just courteous — it
+    is expected. Plan your talk around these targets:
+  </p>
+
+  <ul>
+    <li>
+      <strong>Thesis.</strong> The full session — presentation plus questions — lasts
+      roughly <strong>15 minutes</strong>. Aim to finish your talk in <strong>10–12 minutes</strong>,
+      leaving 3–5 minutes for the committee's questions.
+    </li>
+    <li>
+      <strong>Short Thesis (<em>tesina</em>).</strong> Target a <strong>7–8 minute</strong> presentation.
+    </li>
+  </ul>
+
+  <p>
+    A reliable rule of thumb for slide count is <strong>one slide per minute, ±20%</strong>. A 10-minute
+    talk therefore calls for roughly 8–12 slides (excluding the title and backup slides). If you find
+    yourself with 20 slides for a 10-minute slot, you are not presenting — you are speed-reading.
+  </p>
+
+  <!-- ── Composure ──────────────────────────────────────────────────────────── -->
+  <h2 id="composure">Composure</h2>
+
+  <p>
+    It is completely normal to be nervous. Take a breath. Then consider this: if your thesis has been
+    uploaded and formally approved, only an apocalyptic event can prevent you from graduating.
+    The hard part — the actual work — is already done. The presentation is the celebration.
+  </p>
+
+  <p>
+    Speak clearly and at a measured pace. Nervousness tends to accelerate speech; consciously slow
+    yourself down.
+  </p>
+  
+  <div class="callout callout-info">
+    <svg class="w-5 h-5 flex-shrink-0 mt-0.5 text-blue-500" fill="none" stroke="currentColor"
+         stroke-width="2" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="10"/>
+      <line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+    </svg>
+    <div class="text-sm leading-relaxed">
+      It is okay not to know everything. If the committee asks something you cannot answer, say so
+      honestly: <em>"That is a great point — I have not investigated that direction, but it could be an
+      interesting follow-up."</em> You are not expected to know everything; you are expected to know your work.
+    </div>
+  </div>
+
+  <p>
+    Finally, <strong>be proud.</strong> You did the research. You wrote the thesis. This is your moment to share it.
+  </p>
+
+  <!-- ── Telling Your Story ─────────────────────────────────────────────────── -->
+  <h2 id="story">Telling Your Story</h2>
+
+  <p>
+    A graduation presentation is still a scientific presentation. It should be rigorous and technical —
+    but it should also be a <strong>story</strong>. The committee has read dozens of theses; what makes yours memorable is not the number of equations on screen,
+    but how clearly you communicate why your work matters.
+  </p>
+
+  <p>
+    When designing your slides, keep all the principles from the
+    <a href={`${import.meta.env.BASE_URL}docs/presentations`}>presentation guide</a> firmly in mind:
+    one idea per slide, visuals over walls of text, a clear narrative arc (motivation → gap → method → results),
+    and a closing slide that people will actually want to look at during questions.
+  </p>
+
+  <!-- ── Backup Slides ───────────────────────────────────────────────────────── -->
+  <h2 id="backup">Backup Slides</h2>
+
+  <p>
+    After your closing slide, add some <strong>backup slides</strong>.
+    These are not part of the main talk and will not be shown unless needed. They serve two purposes:
+  </p>
+
+  <ul>
+    <li>
+      <strong>Answering questions.</strong> When the committee asks about a specific experiment,
+      a dataset detail, or an alternative baseline, you can flip to the relevant slide rather than
+      trying to describe it verbally. This looks professional and well-prepared — because it is.
+    </li>
+    <li>
+      <strong>Filling time.</strong> If you finish earlier than expected, a well-chosen backup slide
+      can smoothly extend the talk without improvising.
+    </li>
+  </ul>
+
+  <p>
+    Good candidates for backup slides include: extended ablation studies, additional qualitative results,
+    implementation details that did not fit the main flow, and comparisons with baselines you could not
+    cover in the allotted time. When in doubt, prepare more than you think you will need.
+  </p>
+
+  <!-- ── Rehearsal ───────────────────────────────────────────────────────────── -->
+  <h2 id="rehearsal">Rehearsal</h2>
+
+  <p>
+    We cannot stress this enough: <strong>practise out loud</strong>. Reading your slides in your head
+    is not rehearsal. Speaking them in front of a patient friend is. They will catch unclear transitions 
+    and figures that need more explanation than you realise — precisely because they bring fresh eyes.
+    By the time you walk into the graduation room, your friends and family should be thoroughly
+    bored of hearing your talk. That is the target.
+  </p>
+
+  <p>
+    Finally, <strong>time every run-through</strong>. You will discover that the talk is either too short or too long — and almost never just right on the first attempt. Adjust accordingly.
+  </p>
+
+</DocsLayout>

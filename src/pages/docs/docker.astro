@@ -1,0 +1,295 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+import CodeBlock from '../../components/CodeBlock.astro';
+
+const toc = [
+  { label: 'Why Docker?',          id: 'why' },
+  { label: 'Project Structure',    id: 'structure' },
+  { label: 'Writing a Dockerfile', id: 'dockerfile' },
+  { label: 'Building Images',      id: 'building' },
+  { label: 'Running Containers',   id: 'running' },
+  { label: 'VS Code Integration',  id: 'vscode' },
+  { label: 'Jupyter Notebooks',    id: 'jupyter' },
+];
+---
+
+<DocsLayout title="Docker & Experiments" toc={toc}>
+
+  <h1>Docker & Experiments</h1>
+
+  <p>
+    Docker is mandatory for all experiments on AIRLab servers. It is not optional, and
+    it is not just for production code. Running experiments inside containers ensures
+    that every result is isolated and reproducible — by you six months from now, by your co-supervisor,
+    and by any future lab member who builds on your work.
+  </p>
+
+  <!-- ── Why Docker ─────────────────────────────────────────────────────────── -->
+  <h2 id="why">Why Docker?</h2>
+
+  <p>
+    Without containers, every researcher installs packages globally with <code>pip</code>
+    or <code>conda</code>. Over time, incompatible versions accumulate, experiments break,
+    and nobody can tell which version of a library produced which result. Docker fixes this:
+  </p>
+
+  <ul>
+    <li><strong>Isolation</strong> — your dependencies cannot interfere with anyone else's, and vice versa.</li>
+    <li><strong>Reproducibility</strong> — pin every dependency to an exact version; anyone can rebuild the same environment from scratch.</li>
+    <li><strong>Portability</strong> — the same container runs on Westworld, a cloud VM, or your laptop.</li>
+    <li><strong>Clean servers</strong> — no global package pollution;.</li>
+  </ul>
+
+  <p>The standard development cycle is:</p>
+
+  <ol>
+    <li><strong>Write</strong> a <code>Dockerfile</code> describing your environment</li>
+    <li><strong>Build</strong> it into a Docker image (a binary snapshot)</li>
+    <li><strong>Run</strong> the image as a container, mounting your code and dataset from outside</li>
+    <li><strong>Develop / debug</strong> by attaching to the running container</li>
+    <li><strong>Stop and remove</strong> the container when done; the image can be rebuilt at any time</li>
+  </ol>
+
+  <!-- ── Project Structure ──────────────────────────────────────────────────── -->
+  <h2 id="structure">Project Structure</h2>
+
+  <p>
+    Every project should follow this layout. It makes your repository self-contained —
+    anyone who clones it can build the environment and run the code without asking you
+    anything.
+  </p>
+
+  <CodeBlock
+    lang="text"
+    filename="my_project/"
+    code={`my_project/
+├── src/                   # your source code
+│   ├── __init__.py
+│   ├── train.py
+│   └── evaluate.py
+├── configs/               # YAML/JSON configuration files, if any
+│   └── default.yaml
+├── Dockerfile
+├── requirements.txt       # Python dependencies (pinned versions)
+├── .runconfigs            # Docker run options
+├── .gitignore
+└── README.md              # setup & usage instructions`}
+  />
+
+  <!-- ── Dockerfile ─────────────────────────────────────────────────────────── -->
+  <h2 id="dockerfile">Writing a Dockerfile</h2>
+
+  <p>
+    A Dockerfile is a script that describes how to build a Docker image. It consists of
+    a series of instructions (e.g., <code>FROM</code>, <code>RUN</code>, <code>COPY</code>) 
+    that are executed in order.
+  </p>
+
+  <p>
+    The following is an example Dockerfile for a PyTorch project.
+    Start from an official NVIDIA base image that bundles CUDA and cuDNN. Pick the
+    version that matches the CUDA toolkit installed on the server 
+    (run <code>nvidia-smi</code> and check the top-right CUDA version).
+  </p>
+
+  <CodeBlock
+    lang="dockerfile"
+    filename="Dockerfile"
+    code={`FROM nvidia/cuda:12.2.2-cudnn8-runtime-ubuntu22.04
+
+# 1. Install dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \\
+      python3.11 \\
+      python3-pip \\
+      git \\
+      curl \\
+    && rm -rf /var/lib/apt/lists/*
+
+# 2. Create the "python" alias
+RUN ln -s /usr/bin/python3 /usr/bin/python
+
+WORKDIR /exp
+
+# 3. Setup folders & permissions
+RUN mkdir -p /.local /.cache /.config && \\
+    chmod -R 777 /.local /.cache /.config
+
+COPY requirements.txt /tmp/requirements.txt
+RUN pip install --no-cache-dir -r /tmp/requirements.txt
+
+ENV SHELL /bin/bash
+CMD ["bash"]`}
+  />
+
+  <CodeBlock
+    lang="text"
+    filename="requirements.txt"
+    code={`scikit-learn
+torch
+jupyter`}
+  />
+
+  <!-- ── Building ───────────────────────────────────────────────────────────── -->
+  <h2 id="building">Building Images</h2>
+
+  <CodeBlock
+    lang="bash"
+    filename="westworld — project root"
+    code={`# Build the image. Convention: <username>/<project>:<version>
+docker build --rm -t rossi/deep_learning:v1 .
+
+# Verify the image was built
+docker images | grep my_project`}
+  />
+
+  <!-- ── Running ────────────────────────────────────────────────────────────── -->
+  <h2 id="running">Running Containers</h2>
+
+  <p>
+    AIRLab servers provide a helper script called <code>run-docker</code> that wraps
+    <code>docker run</code> with sensible defaults (GPU assignment, directory mounts,
+    user permissions).
+    <code>run-docker</code> requires the definition of a <code>.runconfig</code> file in your 
+    project root as follows:
+  </p>
+
+  <CodeBlock
+    lang="bash"
+    filename=".runconfig"
+    code={`# Example .runconfig file for run-docker
+image_name: rossi/deep_learning:v1  # the image to run (must be built first)
+container_name: {user}_GPU{args.gpu}_{date}  # container name template with placeholders
+
+# List of additional arguments to pass to 'docker run' every time.
+# -m 16G limits the container's memory to 16 GB (adjust as needed)
+# -v mounts a directory from the host into the container (host_path:container_path)
+# -p forwards a port from the container to the host (host_port:container_port)
+docker_args: -m 16G -v ~/storage:/data -p 8888:8888`}
+  />
+
+  <p>
+    This is how to run containers with <code>run-docker</code>. Remember to book
+    resources before running your container.
+  </p>
+
+  <CodeBlock
+    lang="bash"
+    filename="westworld"
+    code={`# Usage: run-docker <gpu_indices> <cpu_cores> <command...>
+# Example: GPU 0, 4 CPU cores, run training
+run-docker 0 4 python src/train.py --config configs/default.yaml
+
+# Two GPUs (0 and 1), 8 cores
+run-docker 0,1 8 python src/train_multi_gpu.py
+
+# Interactive bash shell for debugging on GPU 0, 12 non-contiguous cores
+run-docker 0 4-8,16-24 bash
+
+# Interactive bash shell with no GPU
+run-docker '' 4-8,16-24 bash
+
+# Interactive bash shell with no GPU on ALL CPUs
+run-docker '' '' bash`}
+  />
+
+  <p>
+    If the setup is correct, you can try running the following script that prints storage and GPU information from inside the container:
+  </p>
+
+  <CodeBlock
+    lang="python"
+    filename="main.py"
+    code={`import torch
+import os
+from datetime import datetime
+
+print(f"Time: {datetime.now()}")
+if os.path.exists('/data'):
+    print(f"Storage: {os.listdir('/data')}")
+else:
+    print("!!! Storage not mounted in /data")
+
+gpu_count = torch.cuda.device_count()
+print(f"GPUs found: {gpu_count}")`}
+  />
+
+  <p>
+    Run the script with <code>run-docker 0 4 python main.py</code> and check the output. If you see the storage contents and the correct number of GPUs, congratulations — your container is set up correctly!
+  </p>
+
+  <p>
+    Useful Docker commands for managing containers and images:
+  </p>
+
+  <CodeBlock
+    lang="bash"
+    filename="westworld"
+    code={`# Useful container management commands
+docker ps                           # list running containers
+docker ps | grep lastname           # filter to yours
+docker exec -it CONTAINER_ID bash   # attach a shell to a running container
+docker logs CONTAINER_ID            # view container output
+docker stop CONTAINER_ID            # stop a running container
+docker rm   CONTAINER_ID            # remove a stopped container
+docker rmi  lastname/my_project:v1  # delete an image`}
+  />
+
+  <!-- ── VS Code Integration ────────────────────────────────────────────────── -->
+  <h2 id="vscode">VS Code Integration</h2>
+
+  <p>
+    Install the <strong>Remote - SSH</strong> extension
+    to edit files on the server directly from your local VS Code. To connect:
+  </p>
+
+  <ol>
+    <li>Open the Command Palette (<kbd>Ctrl+Shift+P</kbd>) → <em>Remote-SSH: Connect to Host…</em></li>
+    <li>Type <code>lastname@&lt;server_ip&gt;</code>, press Enter, and enter your password when prompted</li>
+    <li>Click <em>Yes</em> to add the host to your known hosts, then <em>Add to config</em> — future connections will require no extra setup</li>
+    <li>Once connected, open your project folder on the server via <em>File → Open Folder</em> or <em>Clone from GitHub</em></li>
+  </ol>
+
+  <div class="callout callout-info">
+    <svg class="w-5 h-5 flex-shrink-0 mt-0.5 text-accent-500" fill="none" stroke="currentColor"
+         stroke-width="2" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/>
+      <line x1="12" y1="16" x2="12.01" y2="16"/>
+    </svg>
+    <p class="text-sm leading-relaxed">
+      Remote SSH is for editing files. To run experiments, still use <code>run-docker</code> from
+      a tmux session on the server terminal or VS Code's integrated terminal.
+    </p>
+  </div>
+
+  <!-- ── Jupyter ─────────────────────────────────────────────────────────────── -->
+  <h2 id="jupyter">Jupyter Notebooks</h2>
+
+  <p>
+    To run Jupyter inside a container:
+  </p>
+  <ol>
+    <li>Install Jupyter in your Docker image (add it to <code>requirements.txt</code> and rebuild the image).</li>
+    <li>Include <code>-p 8888:8888</code> in your <code>.runconfig</code> to forward the port.
+    If port 8888 is already in use on the server, change it to an available port (e.g., 8889).</li>
+  </ol>
+
+  <CodeBlock
+    lang="bash"
+    filename="westworld"
+    code={`run-docker 0 4 jupyter notebook --ip=0.0.0.0 --port=8888 --no-browser`}
+  />
+
+  <p>
+    Then connect to <code>http://server_ip:8888</code> from your local browser and enter the token printed in the container logs to access your notebooks.
+  </p>
+
+  <p>
+    You can
+    also run <code>.ipynb</code> notebooks directly in the VS Code editor using the
+    <strong>Jupyter</strong> extension (<code>@tag:notebookKernelJupyterNotebook</code>).
+    To connect the notebook to a kernel inside your Docker container,
+    select the kernel picker in the top-right corner of the notebook editor and 
+    use <code>server_ip:port</code> as IP address and port (e.g., <code>ww:8888</code>).
+  </p>
+
+</DocsLayout>

@@ -1,0 +1,342 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+import CodeBlock from '../../components/CodeBlock.astro';
+import OsCodeBlock from '../../components/OsCodeBlock.astro';
+
+const toc = [
+  { label: 'Connecting via SSH',    id: 'ssh' },
+  { label: 'SSH Keys',              id: 'ssh-keys' },
+  { label: 'GitHub on the Server',  id: 'github' },
+  { label: 'Navigation & Files',    id: 'navigation' },
+  { label: 'Monitoring Resources',  id: 'monitoring' },
+  { label: 'Tmux',                  id: 'tmux' },
+];
+---
+
+<DocsLayout title="Shell & Terminal" toc={toc}>
+
+  <h1>Shell & Terminal</h1>
+
+  <p>
+    The command line is your primary interface to the AIRLab servers. This guide covers
+    the basics of connecting, navigating, and managing your work through the shell.
+  </p>
+
+  <!-- ── SSH ────────────────────────────────────────────────────────────────── -->
+  <h2 id="ssh">Connecting via SSH</h2>
+
+  <p>
+    SSH (Secure Shell) creates an encrypted connection to the server. The server IPs are
+    internal — ask your co-supervisor for them. To avoid typing raw IPs, add them to
+    your system's hosts file as memorable aliases:
+  </p>
+
+  <OsCodeBlock
+    lang="text"
+    linuxFilename="/etc/hosts"
+    windowsFilename={`C:\\Windows\\System32\\drivers\\etc\\hosts`}
+    linuxCode={`# AIRLab servers — replace with actual IPs from your co-supervisor
+<WESTWORLD_IP>   westworld ww
+<ELYSIUM_IP>     elysium   ely`}
+  />
+
+  <p data-os-content="windows">
+    <strong>Note:</strong> You cannot directly overwrite this file with Notepad.
+    Save the edited file anywhere on your desktop, then drag and drop it into
+    <code>C:\Windows\System32\drivers\etc\</code> to overwrite it
+    (administrator permission required).
+  </p>
+
+  <p>
+    Then configure your SSH client to handle usernames and key selection automatically.
+    Add the following to your SSH config file (create it if it doesn't exist):
+  </p>
+
+  <OsCodeBlock
+    lang="text"
+    linuxFilename="~/.ssh/config"
+    windowsFilename={`C:\\Users\\YourName\\.ssh\\config`}
+    linuxCode={`# Westworld
+Host ww westworld
+  HostName westworld
+  User lastname    <-- replace with your actual username on the server
+  IdentityFile ~/.ssh/id_ed25519_airlab
+  ServerAliveInterval 60
+  ServerAliveCountMax 3
+
+# Elysium
+Host ely elysium
+  HostName elysium
+  User lastname    <-- replace with your actual username on the server
+  IdentityFile ~/.ssh/id_ed25519_airlab
+  ServerAliveInterval 60
+  ServerAliveCountMax 3`}
+  />
+
+  <p>
+    With this in place, connecting to any server is just:
+  </p>
+
+  <CodeBlock lang="bash" filename="local machine" code={`ssh ww      # westworld
+ssh ely     # elysium`} />
+
+  <div class="callout callout-info">
+    <svg class="w-5 h-5 flex-shrink-0 mt-0.5 text-accent-500" fill="none" stroke="currentColor"
+         stroke-width="2" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/>
+      <line x1="12" y1="16" x2="12.01" y2="16"/>
+    </svg>
+    <p class="text-sm leading-relaxed">
+      After editing <code>~/.ssh/config</code>, host names get tab-autocomplete in your terminal.
+      You can also open remote folders directly in VS Code with the <strong>Remote - SSH</strong>
+      extension using these same aliases.
+    </p>
+  </div>
+
+  <!-- ── SSH Keys ────────────────────────────────────────────────────────────── -->
+  <h2 id="ssh-keys">SSH Keys</h2>
+
+  <p>
+    Password authentication is convenient but weaker than key-based authentication.
+    Set up an SSH key pair once and never type your password over the network again.
+  </p>
+
+  <OsCodeBlock
+    lang="bash"
+    linuxFilename="local machine"
+    windowsFilename="local machine"
+    linuxCode={`# 1. Generate a key pair (Ed25519 is the modern standard)
+# The -C comment is optional but helps identify the key later
+ssh-keygen -t ed25519 -C "airlab" -f ~/.ssh/id_ed25519_airlab
+
+# 2. Copy the public key to every server you use
+ssh-copy-id -i ~/.ssh/id_ed25519_airlab.pub lastname@<westworld_ip>
+ssh-copy-id -i ~/.ssh/id_ed25519_airlab.pub lastname@<elysium_ip>
+
+# 3. Test key login — no password prompt means it worked
+ssh ww`}
+    windowsCode={`# 1. Generate a key pair (Ed25519 is the modern standard)
+# The -C comment is optional but helps identify the key later
+ssh-keygen -t ed25519 -C "airlab" -f C:\\Users\\YourName\\.ssh\\id_ed25519_airlab
+
+# 2. Windows does not have ssh-copy-id — use PowerShell instead
+type C:\\Users\\YourName\\.ssh\\id_ed25519_airlab.pub | ssh lastname@<westworld_ip> "mkdir -p .ssh && cat >> .ssh/authorized_keys"
+type C:\\Users\\YourName\\.ssh\\id_ed25519_airlab.pub | ssh lastname@<elysium_ip> "mkdir -p .ssh && cat >> .ssh/authorized_keys"
+
+# 3. Test key login — no password prompt means it worked
+ssh ww`}
+  />
+
+  <!-- ── GitHub on the Server ────────────────────────────────────────────────── -->
+  <h2 id="github">GitHub on the Server</h2>
+
+  <p>
+    You will want to <code>git clone</code> and <code>git push</code> directly from the
+    compute servers. The easiest way is to connect remotely with VSCode's <strong>Remote - SSH</strong> extension and use the built-in Git integration.
+    More on that in the <a href={`${import.meta.env.BASE_URL}docs/docker#vscode`}>VS Code Integration</a> section of the Docker guide.
+  </p>
+
+  <!-- ── Navigation ─────────────────────────────────────────────────────────── -->
+  <h2 id="navigation">Common Navigation & File Operations</h2>
+
+  <table>
+    <thead>
+      <tr><th>Command</th><th>What it does</th><th>Example</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>pwd</code></td><td>Print current directory</td><td><code>pwd</code></td></tr>
+      <tr><td><code>ls</code></td><td>List directory contents</td><td><code>ls -lah</code></td></tr>
+      <tr><td><code>cd</code></td><td>Change directory</td><td><code>cd ~/dataset/private</code></td></tr>
+      <tr><td><code>mkdir</code></td><td>Create a directory</td><td><code>mkdir -p results/run_01</code></td></tr>
+      <tr><td><code>cp</code></td><td>Copy files or directories</td><td><code>cp -r src/ backup/</code></td></tr>
+      <tr><td><code>mv</code></td><td>Move or rename</td><td><code>mv old_name.py new_name.py</code></td></tr>
+      <tr><td><code>rm</code></td><td>Delete files</td><td><code>rm -rf results/old_run/</code></td></tr>
+      <tr><td><code>cat</code></td><td>Print file contents</td><td><code>cat config.yaml</code></td></tr>
+      <tr><td><code>less</code></td><td>Page through a file</td><td><code>less training.log</code></td></tr>
+      <tr><td><code>grep</code></td><td>Search inside files</td><td><code>grep "val_loss" training.log</code></td></tr>
+      <tr><td><code>find</code></td><td>Search for files</td><td><code>find . -name "*.pt"</code></td></tr>
+      <tr><td><code>du</code></td><td>Disk usage</td><td><code>du -sh ~/dataset/private/*</code></td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout callout-danger">
+    <svg class="w-5 h-5 flex-shrink-0 mt-0.5 text-red-500" fill="none" stroke="currentColor"
+         stroke-width="2" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="10"/>
+      <line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
+    </svg>
+    <div class="text-sm leading-relaxed">
+      <strong><code>rm -rf</code> has no undo.</strong> On a shared server there is no
+      trash bin and no backup for your home directory. Double-check the path before
+      pressing Enter, every single time.
+    </div>
+  </div>
+
+  <h3>Useful patterns</h3>
+
+  <CodeBlock
+    lang="bash"
+    code={`# Search command history
+history | grep docker
+
+# Count lines in a file
+wc -l training.log
+
+# Sort and unique a list
+cat labels.txt | sort | uniq -c | sort -rn
+
+# Extract a .tar.gz archive into a specific directory
+tar -xzf dataset.tar.gz -C ~/storage_megaverse`}
+  />
+
+  <!-- ── Monitoring ──────────────────────────────────────────────────────────── -->
+  <h2 id="monitoring">Monitoring Resources</h2>
+
+  <p>
+    Before starting an experiment, always check that the resources you booked are
+    actually free.
+  </p>
+
+  <CodeBlock
+    lang="bash"
+    code={`# CPU, RAM, and per-process stats (interactive — press q to quit)
+htop
+
+# Full GPU status: memory usage, utilisation, running processes
+nvidia-smi
+
+# Find who owns a process by surname
+ps aux | grep surname
+
+# Watch GPU utilisation live every 2 seconds
+watch -n 2 nvidia-smi`}
+  />
+
+  <!-- ── tmux ───────────────────────────────────────────────────────────────── -->
+  <h2 id="tmux">Tmux — Persistent Terminal Sessions</h2>
+
+  <p>
+    Training a neural network can take hours or days. If your SSH connection drops —
+    due to a network hiccup, a laptop going to sleep, or a VPN timeout — any process
+    running directly in your terminal will be killed. <strong>tmux</strong> solves this
+    by running your shell sessions on the server, completely independent of your connection.
+    Detach, close your laptop, and reattach later to find everything exactly as you left it.
+  </p>
+
+  <p>
+    The key concept: <kbd>Ctrl-b</kbd> is the <em>prefix</em> — press it before every
+    tmux shortcut, then release it before pressing the next key.
+    A full cheat sheet is available <a href="https://tmuxcheatsheet.com/" target="_blank" rel="noopener noreferrer">here</a>.
+  </p>
+
+  <h3>Quick start</h3>
+
+  <CodeBlock
+    lang="bash"
+    filename="westworld"
+    code={`# Create a named session (use a meaningful name — your project or experiment)
+tmux new -s resnet_training
+
+# Inside the session, start your experiment as normal
+run-docker 0 0-8 "python train.py"
+
+# Detach — your experiment keeps running on the server
+# Press: Ctrl-b  then  d
+
+# Later, reattach from any SSH session
+tmux attach -t resnet_training`}
+  />
+
+  <h3>Sessions</h3>
+
+  <table>
+    <thead>
+      <tr><th>Action</th><th>Command / Shortcut</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Create a new named session</td><td><code>tmux new -s name</code></td></tr>
+      <tr><td>List all sessions</td><td><code>tmux ls</code></td></tr>
+      <tr><td>Attach to a session</td><td><code>tmux attach -t name</code></td></tr>
+      <tr><td>Detach from current session</td><td><kbd>Ctrl-b</kbd> <kbd>d</kbd></td></tr>
+      <tr><td>Rename current session</td><td><kbd>Ctrl-b</kbd> <kbd>$</kbd></td></tr>
+      <tr><td>Kill a session</td><td><code>tmux kill-session -t name</code></td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout callout-warning">
+    <svg class="w-5 h-5 flex-shrink-0 mt-0.5 text-yellow-500" fill="none" stroke="currentColor"
+         stroke-width="2" viewBox="0 0 24 24">
+      <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+      <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+    </svg>
+    <div class="text-sm leading-relaxed">
+      <strong>Clean up after yourself.</strong> Kill sessions when experiments finish with
+      <code>tmux kill-session -t name</code>.
+    </div>
+  </div>
+
+  <h3>Windows & Panes</h3>
+
+  <p>
+    A session can contain multiple <em>windows</em> (like browser tabs), and each window
+    can be split into <em>panes</em> (side-by-side or stacked terminals).
+  </p>
+
+  <table>
+    <thead>
+      <tr><th>Action</th><th>Shortcut</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>New window</td><td><kbd>Ctrl-b</kbd> <kbd>c</kbd></td></tr>
+      <tr><td>Switch to window by number</td><td><kbd>Ctrl-b</kbd> <kbd>0–9</kbd></td></tr>
+      <tr><td>Next / previous window</td><td><kbd>Ctrl-b</kbd> <kbd>n</kbd> / <kbd>p</kbd></td></tr>
+      <tr><td>Rename current window</td><td><kbd>Ctrl-b</kbd> <kbd>,</kbd></td></tr>
+      <tr><td>Close current window</td><td><kbd>Ctrl-b</kbd> <kbd>&amp;</kbd></td></tr>
+      <tr><td>Split pane vertically (side by side)</td><td><kbd>Ctrl-b</kbd> <kbd>%</kbd></td></tr>
+      <tr><td>Split pane horizontally (top/bottom)</td><td><kbd>Ctrl-b</kbd> <kbd>"</kbd></td></tr>
+      <tr><td>Move between panes</td><td><kbd>Ctrl-b</kbd> <kbd>↑↓←→</kbd></td></tr>
+      <tr><td>Zoom pane to full screen</td><td><kbd>Ctrl-b</kbd> <kbd>z</kbd></td></tr>
+      <tr><td>Close current pane</td><td><kbd>Ctrl-b</kbd> <kbd>x</kbd></td></tr>
+    </tbody>
+  </table>
+
+  <h3>Configuration</h3>
+
+  <p>
+    <code>tmux</code> is highly customizable. Create a <code>~/.tmux.conf</code> file to set your
+    preferred keybindings, status bar, colors, and more. Here's a sample config to get you started:
+  </p>
+
+  <CodeBlock
+    lang="bash"
+    filename="~/.tmux.conf"
+    code={`# Enable mouse support (click to select panes/windows, scroll history)
+set -g mouse on
+
+# Start window and pane numbering at 1
+set -g base-index 1
+set -g pane-base-index 1
+
+# Increase scrollback history
+set -g history-limit 50000
+
+# Faster key repetition
+set -sg escape-time 0
+
+# Reload config with: Ctrl-b r
+bind r source-file ~/.tmux.conf \; display-message "Config reloaded"
+
+# Intuitive pane splitting (opens in current directory)
+bind | split-window -h -c "#{pane_current_path}"
+bind - split-window -v -c "#{pane_current_path}"
+
+# Status bar
+set -g status-right '%H:%M %d-%b'
+set -g status-style 'bg=#102c53 fg=white'`}
+  />
+
+  <CodeBlock lang="bash" code={`# Reload config without restarting tmux
+tmux source-file ~/.tmux.conf
+# Or inside a session: Ctrl-b r`} />
+
+</DocsLayout>

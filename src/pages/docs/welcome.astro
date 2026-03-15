@@ -1,0 +1,227 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+import CodeBlock from '../../components/CodeBlock.astro';
+
+const toc = [
+  { label: 'Before You Start',      id: 'checklist' },
+  { label: 'Server Infrastructure', id: 'infrastructure' },
+  { label: 'Directory Layout',      id: 'directories' },
+  { label: 'Getting Access',        id: 'access' },
+  { label: 'Core Responsibilities', id: 'responsibilities' },
+  { label: 'Resource Booking',      id: 'booking' },
+];
+---
+
+<DocsLayout title="Welcome & Onboarding" toc={toc}>
+
+  <h1>Welcome & Onboarding</h1>
+
+  <p>
+    Welcome to the <strong>Artificial Intelligence and Robotics Lab (AIRLab)</strong> at
+    Politecnico di Milano. This handbook is your starting point. Read it carefully before
+    touching any shared resource.
+  </p>
+
+  <!-- ── Before You Start ──────────────────────────────────────────────────── -->
+  <h2 id="checklist">Before You Start</h2>
+
+  <p>
+    Before you can connect to anything, make sure you have obtained the following from your
+    co-supervisor:
+  </p>
+
+  <table>
+    <thead>
+      <tr><th>Item</th><th>How to get it</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Building 7 access</td>
+        <td>Register as an AIRLab user at <a href="https://airlab.deib.polimi.it/life-in-airlab/" target="_blank" rel="noopener">Life@AIRLab</a></td>
+      </tr>
+      <tr>
+        <td>VPN access</td>
+        <td>Ask your co-supervisor to send a VPN access request to the department ICT. Then, follow this guide to setup <a href="https://www.ict.polimi.it/network/vpn/?lang=en" target="_blank" rel="noopener">Global Protect</a></td>
+      </tr>
+      <tr>
+        <td>Server credentials (username + temporary password)</td>
+        <td>Ask your co-supervisor for the temporary password. The server username is your surname</td>
+      </tr>
+      <tr>
+        <td>AIRLab Discord server invite</td>
+        <td>Ask your co-supervisor for a single-use invite link</td>
+      </tr>
+      <tr>
+        <td>Resource booking spreadsheet links</td>
+        <td>Ask your co-supervisor for the specific resource booking links</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ── Server Infrastructure ──────────────────────────────────────────────── -->
+  <h2 id="infrastructure">Server Infrastructure</h2>
+
+  <p>
+    AIRLab operates two GPU compute servers and one NAS (Network-Attached Storage).
+    All servers are located in the DEIB server room at Building 20. You interact with
+    them remotely — from the AIRLab LAN at Building 7, or from anywhere via VPN.
+  </p>
+
+  <table>
+    <thead>
+      <tr><th>Host</th><th>Role</th><th>GPUs</th><th>CPU cores</th><th>RAM</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>westworld</strong></td>
+        <td>Compute</td>
+        <td>8 × 11 GB NVIDIA 1080 Ti</td>
+        <td>40</td>
+        <td>252 GB</td>
+      </tr>
+      <tr>
+        <td><strong>elysium</strong></td>
+        <td>Compute</td>
+        <td>4 × 24 GB RTX 6000 · 1 × 12 GB Titan X · 1 × 11 GB 1080 Ti</td>
+        <td>48</td>
+        <td>252 GB</td>
+      </tr>
+      <tr>
+        <td><strong>megaverse</strong></td>
+        <td>Storage</td>
+        <td>—</td>
+        <td>—</td>
+        <td>—</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ── Directory Layout ───────────────────────────────────────────────────── -->
+  <h2 id="directories">Directory Layout</h2>
+
+  <p>
+    Each user has a home directory on every compute server. Most of the subdirectories
+    are symlinks pointing to your personal space on <code>megaverse</code> so that files are
+    accessible from all machines:
+  </p>
+
+  <CodeBlock
+    lang="text"
+    filename="/home/lastname/ (on any compute server)"
+    code={`/home/lastname/
+├── ...
+└── storage    → /megaverse/storage/lastname/      ← put your code and datasets here`}
+  />
+
+  <p>
+    Keep your home directory itself light. Use <code>~/storage/</code> for project code, large datasets, and model checkpoints.
+  </p>
+
+  <div class="callout callout-warning">
+    <svg class="w-5 h-5 flex-shrink-0 mt-0.5 text-yellow-500" fill="none" stroke="currentColor"
+         stroke-width="2" viewBox="0 0 24 24">
+      <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+      <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+    </svg>
+    <div class="text-sm leading-relaxed">
+      <strong>Home quota.</strong> The home directory (<code>~</code>) has a hard quota of
+      <strong>20 GB</strong>. Exceeding it prevents saving files — including experiment
+      outputs — which can corrupt a running job. Check usage with <code>ncdu -x ~</code>.
+    </div>
+  </div>
+
+  <!-- ── Getting Access ────────────────────────────────────────────────────── -->
+  <h2 id="access">Getting Access</h2>
+
+  <p>
+    Your co-supervisor will create a Linux account for you. Your username follows the
+    convention <code>lastname</code> (all lowercase). Verify your login:
+  </p>
+
+  <CodeBlock
+    lang="bash"
+    filename="local machine"
+    code={`# IP addresses are internal — ask your co-supervisor for them
+ssh lastname@<server ip>`}
+  />
+
+  <p>
+    Your password is set to expire on first login and you will be prompted to choose a
+    new one. If not, or to change it later:
+  </p>
+
+  <CodeBlock
+    lang="bash"
+    filename="westworld"
+    code={`passwd
+# Enter current (temporary) password, then your new password twice`}
+  />
+
+  <p>
+    After logging in, switch to <strong>SSH key authentication</strong> to avoid
+    typing passwords. See the
+    <a href={`${import.meta.env.BASE_URL}docs/shell#ssh`}>SSH</a> in the Shell guide.
+  </p>
+
+  <!-- ── Core Responsibilities ──────────────────────────────────────────────── -->
+  <h2 id="responsibilities">Core Responsibilities</h2>
+
+  <p>
+    Every AIRLab member is expected to uphold the following practices from day one.
+  </p>
+
+  <table>
+    <thead>
+      <tr><th>Responsibility</th><th>What it means in practice</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Use Docker for all experiments</strong></td>
+        <td>Never install Python packages globally with <code>pip install</code>. All code runs inside a container built from your project's <code>Dockerfile</code>.</td>
+      </tr>
+      <tr>
+        <td><strong>Book resources before using them</strong></td>
+        <td>Reserve CPU cores and GPUs via the shared booking spreadsheet before starting any experiment. See <a href="#booking">Resource Booking</a> below.</td>
+      </tr>
+      <tr>
+        <td><strong>Respect storage limits</strong></td>
+        <td>Your home directory is capped at <strong>20 GB</strong>. Most of your files should go in <code>~/storage/</code>.</td>
+      </tr>
+      <tr>
+        <td><strong>Version your code on Git</strong></td>
+        <td>All project code must live in a private GitHub repository with your co-supervisors added as members.</td>
+      </tr>
+      <tr>
+        <td><strong>Document your work</strong></td>
+        <td>Every project must have a <code>README.md</code> that a stranger could use to reproduce your results from scratch.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout callout-warning">
+    <svg class="w-5 h-5 flex-shrink-0 mt-0.5 text-yellow-500" fill="none" stroke="currentColor"
+         stroke-width="2" viewBox="0 0 24 24">
+      <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+      <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+    </svg>
+    <div class="text-sm leading-relaxed">
+      If you are ever unsure whether something is allowed, ask your co-supervisor.
+      The shared infrastructure depends on mutual respect.
+    </div>
+  </div>
+
+  <!-- ── Resource Booking ────────────────────────────────────────────────────── -->
+  <h2 id="booking">Resource Booking</h2>
+
+  <p>
+    All CPU cores and GPUs must be reserved before use. Each server has its own
+    booking spreadsheet — ask your co-supervisor for the links. When booking:
+  </p>
+
+  <ul>
+    <li>Reserve only what your experiment actually needs. Booking 8 GPUs for a single-GPU job wastes shared resources.</li>
+    <li>Set a realistic end time. If your job finishes early, release the reservation immediately.</li>
+    <li>Never book more than <strong>three days</strong> in advance — implement proper checkpointing instead so jobs can be paused and resumed.</li>
+  </ul>
+
+</DocsLayout>

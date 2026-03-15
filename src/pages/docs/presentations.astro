@@ -1,0 +1,166 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+import CodeBlock from '../../components/CodeBlock.astro';
+
+const toc = [
+  { label: 'Scientific Storytelling',      id: 'storytelling' },
+  { label: 'Slide Design',             id: 'design' },
+  { label: 'Directing Attention',      id: 'attention' },
+  { label: 'Delivery',                 id: 'delivery' },
+];
+---
+
+<DocsLayout title="Making Presentations" toc={toc}>
+
+  <h1>Making Presentations</h1>
+
+  <img src={`${import.meta.env.BASE_URL}presentations.png`} alt="Making Presentations" style="width: 100%; max-width: 600px; margin: 1.5rem auto; display: block;" />
+
+  <p>
+    A scientific presentation is not a paper you read aloud. It is a <strong>performance</strong> — a curated,
+    time-constrained experience designed to leave your audience with one clear idea they did not have before.
+    The slides are props. You are the presenter. This guide covers how to make both work together.
+  </p>
+
+  <div class="callout callout-info">
+    <svg class="w-5 h-5 flex-shrink-0 mt-0.5 text-blue-500" fill="none" stroke="currentColor"
+         stroke-width="2" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="10"/>
+      <line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+    </svg>
+    <div class="text-sm leading-relaxed">
+      Use DEIB's official slide template: <a href={`${import.meta.env.BASE_URL}template-deib-2024.pptx`} download><strong>template-deib-2024.pptx</strong></a>.
+    </div>
+  </div>
+
+  <!-- ── Scientific Storytelling ────────────────────────────────────────────── -->
+  <h2 id="storytelling">Scientific Storytelling</h2>
+
+  <p>
+    Effective scientific communication is less about dry data and more about storytelling.
+    Audiences remember facts that are embedded in a narrative far better than facts presented in isolation.
+    To see why, consider two ways of describing the same discovery:
+  </p>
+
+  <div class="space-y-3 my-6">
+    <div class="border-l-4 border-gray-300 pl-4 py-1">
+      <p class="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1">Version 1</p>
+      <p class="text-gray-500 italic text-sm">Sir Alexander Fleming, a Scottish microbiologist, discovered the genus <em>Penicillium</em> in 1928.</p>
+    </div>
+    <div class="border-l-4 border-accent-400 pl-4 py-1">
+      <p class="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1">Version 2</p>
+      <p class="text-gray-700 italic text-sm">In 1928, Fleming left for a family holiday without clearing his workbench. Upon his return, a contaminated culture plate showed mould that had stopped bacteria from growing. "That's funny," he remarked. The mould was <em>Penicillium</em> — the world's first antibiotic.</p>
+    </div>
+  </div>
+
+  <p>
+    The second version is more memorable because it follows a recognisable structure: a <strong>setting</strong>,
+    an <strong>obstacle</strong>, and a <strong>resolution</strong>. This structure maps directly onto the way
+    every good research presentation should be organised.
+  </p>
+
+  <h3>The Research Spiral</h3>
+
+  <p>
+    Every presentation should guide the audience through five stages, in order:
+  </p>
+
+  <ol>
+    <li><strong>Motivation.</strong> Why does this problem matter? This is the spark. Hook the audience with a compelling question, a striking statistic, or a real-world failure that demands a solution.</li>
+    <li><strong>Setting.</strong> What do we already know? Briefly orient the audience in the state of the art — enough context to understand the gap.</li>
+    <li><strong>Obstacle.</strong> What is missing? Identify the specific gap in knowledge or capability that your work addresses. This is the <em>but</em> in the story.</li>
+    <li><strong>Action.</strong> What did you do? Present your method or approach — the hero's response to the obstacle.</li>
+    <li><strong>Resolution.</strong> What happened? Show your results and explain what they mean for the field.</li>
+  </ol>
+
+  <p>
+    A useful shorthand for structuring any scientific argument is the <strong>ABT method</strong>
+    (And–But–Therefore): describe what you know (<em>and</em>), what you don't know or what is broken (<em>but</em>),
+    and your resolution (<em>therefore</em>). If you can compress your entire presentation into a single
+    ABT sentence, you have a clear story. If you cannot, you probably don't yet.
+  </p>
+
+  <h3>Writing for scientific impact</h3>
+
+  <p>
+    The narrative structure applies not just to the overall arc, but to how you phrase each claim:
+  </p>
+
+  <ul>
+    <li><strong>Prioritise motivation.</strong> Always keep the "why" at the forefront. If the audience does not understand why something matters, they will not care about the how.</li>
+    <li><strong>Use conjunctions strategically.</strong> Words like <em>but</em>, <em>however</em>, and <em>yet</em> signal contrast and create narrative tension — the engine of a good story.</li>
+    <li><strong>Keep it simple.</strong> Short, clear sentences. If a sentence requires re-reading, it is too long.</li>
+    <li><strong>One slide, one idea.</strong> Each slide should have a single central point. If you find yourself writing "and also…", split the slide.</li>
+  </ul>
+
+  <!-- ── Slide Design ────────────────────────────────────────────────────────── -->
+  <h2 id="design">Slide Design</h2>
+
+  <p>
+    A slide is not a document. The moment your audience starts reading a slide,
+    they stop listening to you. Your job is to make slides that <em>complement</em> your voice, not replace it.
+  </p>
+
+  <h3>Visuals over words</h3>
+
+  <p>
+    Replace text with figures and diagrams wherever possible. A well-designed figure communicates
+    in milliseconds what a paragraph takes minutes to absorb.
+  </p>
+
+  <h3>Minimalism</h3>
+
+  <ul>
+    <li>Aim for no more than 4 bullet points per slide, with no more than 4 words per bullet.</li>
+    <li>Use white space deliberately. A crowded slide is a slide your audience has already tuned out.</li>
+    <li>Maintain consistent layout, fonts, and colour throughout the entire deck.</li>
+  </ul>
+
+  <h3>The closing slide</h3>
+
+  <p>
+    Do not end with a "Thank you for your attention" slide. It is the most forgettable slide
+    you can show — and the last slide your audience sees is the one they will stare at during Q&amp;A.
+    Use that slide wisely: end with a <strong>references and contacts slide</strong> that includes
+    your email, key citations, and optionally a QR code to your paper or project page.
+  </p>
+
+  <!-- ── Directing Attention ─────────────────────────────────────────────────── -->
+  <h2 id="attention">Directing Attention</h2>
+
+  <p>
+    Your audience's attention is finite and easily lost. Good presentations actively manage where
+    that attention goes, rather than leaving it to chance.
+  </p>
+
+  <h3>Use animations purposefully</h3>
+
+  <p>
+    Animations are not decoration — they are a tool for controlling the flow of information.
+    Use them to reveal content one piece at a time so the audience focuses on what you are
+    currently talking about rather than skipping ahead. Examples include:
+  </p>
+
+  <ul>
+    <li>Revealing bullet points one at a time as you speak.</li>
+    <li>Highlighting specific elements in complex figures to draw the audience's attention to what you are discussing.</li>
+  </ul>
+
+  <h3>Structure and outline</h3>
+
+  <p>
+    Open with a clear outline slide and return to it at the transition between major sections.
+    This gives the audience a map of where they are in the story — especially important in longer talks.
+  </p>
+
+  <!-- ── Delivery ────────────────────────────────────────────────────────────── -->
+  <h2 id="delivery">Delivery</h2>
+
+  <ul>
+    <li><strong>Never read from your slides.</strong> If you are reading, the audience can read faster than you speak. You become redundant.</li>
+    <li><strong>Face the audience, not the screen.</strong> Maintain eye contact. Glance at the slide to orient yourself, then look back at the people.</li>
+    <li><strong>Practise out loud.</strong> Reading through notes in your head is not practice. Speak the words. Time yourself. Find the moments where you hesitate — those are the moments you do not yet understand well enough.</li>
+    <li><strong>Manage your time.</strong> Running over time is disrespectful to the audience and the speakers after you. A shorter talk is acceptable; a longer talk is not. If you find yourself running out of time, cut the last few slides.</li>
+  </ul>
+
+</DocsLayout>

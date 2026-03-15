@@ -1,0 +1,122 @@
+---
+/**
+ * CodeBlock — macOS-style code window component
+ *
+ * Props:
+ *   code     (required)  Raw code string
+ *   lang     (required)  Language identifier for Shiki syntax highlighting
+ *   filename (optional)  Filename shown in the window header bar
+ *
+ * Usage:
+ *   <CodeBlock lang="bash" filename="~/.bashrc" code={`export FOO=bar`} />
+ */
+import { Code } from 'astro:components';
+
+interface Props {
+  code: string;
+  lang: string;
+  filename?: string;
+}
+
+const { code, lang, filename } = Astro.props;
+
+// Encode once for the data-attribute so it survives HTML escaping
+const encoded = Buffer.from(code).toString('base64');
+---
+
+<div class="code-block not-prose my-6 rounded-xl overflow-hidden border border-code-border shadow-lg">
+  <!-- ── Mac window header ──────────────────────────────────── -->
+  <div class="code-header flex items-center gap-3 px-4 py-3"
+       style="background-color: var(--code-header);">
+
+    <!-- Traffic-light dots -->
+    <div class="flex items-center gap-1.5" aria-hidden="true">
+      <span class="window-dot" style="background:#ff5f56"></span>
+      <span class="window-dot" style="background:#ffbd2e"></span>
+      <span class="window-dot" style="background:#27c93f"></span>
+    </div>
+
+    <!-- Filename badge -->
+    {filename && (
+      <span class="flex-1 text-center text-xs font-mono text-gray-400 truncate -ml-16">
+        {filename}
+      </span>
+    )}
+    {!filename && <span class="flex-1" />}
+
+    <!-- Copy button -->
+    <button
+      class="copy-btn text-xs font-medium px-2.5 py-1 rounded transition-all duration-150
+             text-gray-400 hover:text-white border border-gray-600 hover:border-gray-400
+             active:scale-95"
+      data-code={encoded}
+      aria-label="Copy code"
+    >
+      Copy
+    </button>
+  </div>
+
+  <!-- ── Language badge ─────────────────────────────────────── -->
+  <div class="relative" style="background-color: var(--code-bg);">
+    {lang && (
+      <span class="absolute top-2 right-3 text-xs font-mono opacity-40 text-gray-300 select-none">
+        {lang}
+      </span>
+    )}
+    <!-- Astro built-in Code component — uses Shiki server-side -->
+    <Code
+      code={code}
+      lang={lang}
+      theme="github-dark"
+      class="!bg-transparent !m-0 !rounded-none text-sm leading-relaxed"
+    />
+  </div>
+</div>
+
+<!-- ── Copy-to-clipboard script ───────────────────────────────────────────── -->
+<script>
+  document.addEventListener('click', async (e) => {
+    const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('.copy-btn');
+    if (!btn) return;
+
+    const encoded = btn.dataset.code ?? '';
+    const text = atob(encoded);
+
+    try {
+      await navigator.clipboard.writeText(text);
+      btn.textContent = 'Copied!';
+      btn.style.color = '#4ade80';
+      btn.style.borderColor = '#4ade80';
+    } catch {
+      btn.textContent = 'Error';
+    } finally {
+      setTimeout(() => {
+        btn.textContent = 'Copy';
+        btn.style.color = '';
+        btn.style.borderColor = '';
+      }, 2000);
+    }
+  });
+</script>
+
+<style>
+  .window-dot {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  /* Override Shiki wrapper padding */
+  .code-block :global(pre) {
+    margin: 0 !important;
+    border-radius: 0 !important;
+    padding: 1.1em 1.25em !important;
+    background-color: var(--code-bg) !important;
+    font-family: 'JetBrains Mono', 'Fira Code', monospace !important;
+    font-size: 0.875rem !important;
+    line-height: 1.65 !important;
+    overflow-x: auto;
+  }
+</style>

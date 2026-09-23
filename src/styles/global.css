@@ -79,6 +79,17 @@ body {
   @apply bg-accent-50;
 }
 
+/* On narrow screens, wide tables scroll inside their own box instead of the page */
+@media (max-width: 767px) {
+  .doc-content table {
+    @apply block overflow-x-auto;
+  }
+  .doc-content th,
+  .doc-content td {
+    @apply px-3 py-2;
+  }
+}
+
 /* ── Step lists (numbered guides) ─────────────────────────────────────────── */
 .doc-content ol.steps {
   @apply list-none ml-0 space-y-3;

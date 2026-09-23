@@ -1,0 +1,27 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import LegacyBanner from '../../../components/LegacyBanner.astro';
+
+const base = import.meta.env.BASE_URL;
+---
+
+<DocsLayout title="Legacy Server Docs" noindex>
+
+  <h1>Legacy Server Docs</h1>
+
+  <LegacyBanner />
+
+  <p>
+    These pages document the workflow used on the old AIRLab compute servers
+    (<strong>Westworld</strong> and <strong>Elysium</strong>): manual resource booking through
+    shared spreadsheets, and Docker containers started with the <code>run-docker</code> helper.
+    That workflow does not apply to <strong>polimi-cluster</strong>, where jobs are scheduled by Slurm.
+  </p>
+
+  <ul>
+    <li><a href={`${base}docs/legacy/welcome`}>Welcome &amp; Onboarding</a>: server infrastructure, directory layout, resource booking</li>
+    <li><a href={`${base}docs/legacy/shell`}>Shell &amp; Terminal</a>: SSH aliases for Westworld and Elysium, monitoring, tmux</li>
+    <li><a href={`${base}docs/legacy/docker`}>Docker &amp; Experiments</a>: Dockerfiles, <code>run-docker</code>, <code>.runconfig</code>, Jupyter</li>
+  </ul>
+
+</DocsLayout>

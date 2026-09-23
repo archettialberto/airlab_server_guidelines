@@ -1,6 +1,7 @@
 ---
-import DocsLayout from '../../layouts/DocsLayout.astro';
-import CodeBlock from '../../components/CodeBlock.astro';
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import LegacyBanner from '../../../components/LegacyBanner.astro';
+import CodeBlock from '../../../components/CodeBlock.astro';
 
 const toc = [
   { label: 'Why Docker?',          id: 'why' },
@@ -13,9 +14,11 @@ const toc = [
 ];
 ---
 
-<DocsLayout title="Docker & Experiments" toc={toc}>
+<DocsLayout title="Docker & Experiments (Legacy)" toc={toc} noindex>
 
   <h1>Docker & Experiments</h1>
+
+  <LegacyBanner />
 
   <p>
     Docker is mandatory for all experiments on AIRLab servers. It is not optional, and

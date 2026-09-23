@@ -1,0 +1,180 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+import CodeBlock from '../../components/CodeBlock.astro';
+
+const base = import.meta.env.BASE_URL;
+
+const toc = [
+  { label: 'Environment Modules',    id: 'modules' },
+  { label: 'Creating an Environment', id: 'create' },
+  { label: 'Using It in Jobs',       id: 'activate' },
+  { label: 'Reproducibility',        id: 'reproducibility' },
+  { label: 'Project Structure',      id: 'structure' },
+];
+---
+
+<DocsLayout title="Software & Conda" toc={toc}>
+
+  <h1>Software & Conda</h1>
+
+  <p>
+    Every project needs its own isolated, reproducible software environment, so that your
+    dependencies never interfere with anyone else's, and so that anyone (you six months from now,
+    your co-supervisor, a future lab member) can rebuild it from scratch. On polimi-cluster, system
+    software is provided through <strong>environment modules</strong>, and Python environments are
+    managed with <strong>Conda</strong>.
+  </p>
+
+  <!-- ── Modules ──────────────────────────────────────────────────────────── -->
+  <h2 id="modules">Environment Modules</h2>
+
+  <p>
+    Modules make software available to your shell on demand. List what is installed, then load what
+    you need:
+  </p>
+
+  <CodeBlock
+    lang="bash"
+    filename="polimi-cluster"
+    code={`module avail                    # list available modules
+module load miniconda/25.5.1    # load the cluster's Conda installation
+module list                     # show what is currently loaded`}
+  />
+
+  <p>
+    Loaded modules only apply to the current shell. A Slurm job starts from a fresh environment,
+    so <strong>every script must load the modules it needs</strong>.
+  </p>
+
+  <!-- ── Create ───────────────────────────────────────────────────────────── -->
+  <h2 id="create">Creating an Environment</h2>
+
+  <p>
+    Installing packages can use considerable CPU, RAM, disk I/O, and network bandwidth, so do not do
+    it on the login node. Create Conda environments as Slurm jobs instead. Create
+    <code>create-conda-env.sbatch</code>:
+  </p>
+
+  <CodeBlock
+    lang="bash"
+    filename="create-conda-env.sbatch"
+    code={`#!/bin/bash
+#SBATCH --job-name=create-conda-env
+#SBATCH --partition=cpu
+#SBATCH --time=02:00:00
+#SBATCH --cpus-per-task=4
+#SBATCH --mem=16G
+#SBATCH --output=conda-create-%j.out
+#SBATCH --error=conda-create-%j.err
+
+module load miniconda/25.5.1
+conda create --yes --name my-project python=3.11`}
+  />
+
+  <p>
+    Submit it, and check the log once it finishes:
+  </p>
+
+  <CodeBlock
+    lang="bash"
+    filename="polimi-cluster"
+    code={`sbatch create-conda-env.sbatch`}
+  />
+
+  <p>
+    Use the same pattern to install or update packages. For example, append these lines to the
+    script to install your project's dependencies into the new environment:
+  </p>
+
+  <CodeBlock
+    lang="bash"
+    filename="create-conda-env.sbatch (continued)"
+    code={`conda activate my-project
+pip install -r requirements.txt`}
+  />
+
+  <!-- ── Activate ─────────────────────────────────────────────────────────── -->
+  <h2 id="activate">Using It in Jobs</h2>
+
+  <p>
+    Activate the environment in every Slurm script that needs it, before running your code:
+  </p>
+
+  <CodeBlock
+    lang="bash"
+    filename="train.sbatch"
+    code={`#!/bin/bash
+#SBATCH ...                     # resource requests
+
+module load miniconda/25.5.1
+conda activate my-project
+
+python train.py`}
+  />
+
+  <div class="callout callout-info">
+    <svg class="w-5 h-5 flex-shrink-0 mt-0.5 text-accent-500" fill="none" stroke="currentColor"
+         stroke-width="2" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/>
+      <line x1="12" y1="16" x2="12.01" y2="16"/>
+    </svg>
+    <p class="text-sm leading-relaxed">
+      If a job fails with <em>"Run 'conda init' before 'conda activate'"</em>, add
+      <code>eval "$(conda shell.bash hook)"</code> right after the <code>module load</code> line.
+      Batch scripts are non-interactive shells and do not read the setup that
+      <code>conda init</code> writes to <code>~/.bashrc</code>.
+    </p>
+  </div>
+
+  <!-- ── Reproducibility ──────────────────────────────────────────────────── -->
+  <h2 id="reproducibility">Reproducibility</h2>
+
+  <p>
+    Keep an environment definition in your project repository, and update it whenever you add or
+    upgrade a package:
+  </p>
+
+  <CodeBlock
+    lang="bash"
+    filename="polimi-cluster"
+    code={`conda env export --name my-project > environment.yml`}
+  />
+
+  <p>
+    Anyone can then rebuild the exact same environment by submitting a job that runs
+    <code>conda env create --file environment.yml</code>.
+  </p>
+
+  <!-- ── Project Structure ────────────────────────────────────────────────── -->
+  <h2 id="structure">Project Structure</h2>
+
+  <p>
+    Every project should follow a layout like this one. It makes your repository self-contained:
+    anyone who clones it can rebuild the environment and run the code without asking you anything.
+  </p>
+
+  <CodeBlock
+    lang="text"
+    filename="my_project/"
+    code={`my_project/
+├── src/                   # your source code
+│   ├── __init__.py
+│   ├── train.py
+│   └── evaluate.py
+├── configs/               # YAML/JSON configuration files, if any
+│   └── default.yaml
+├── slurm/                 # your .sbatch scripts
+│   ├── create-env.sbatch
+│   └── train.sbatch
+├── environment.yml        # exported Conda environment
+├── .gitignore             # exclude datasets, checkpoints, and *.out / *.err logs
+└── README.md              # setup & usage instructions`}
+  />
+
+  <p>
+    Keep datasets and large checkpoints out of Git: store them in
+    <code>~/dataset/private</code> or another directory in your home, as described in
+    <a href={`${base}docs/welcome#storage`}>Files &amp; Storage</a>.
+  </p>
+
+</DocsLayout>

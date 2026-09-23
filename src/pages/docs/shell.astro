@@ -3,138 +3,144 @@ import DocsLayout from '../../layouts/DocsLayout.astro';
 import CodeBlock from '../../components/CodeBlock.astro';
 import OsCodeBlock from '../../components/OsCodeBlock.astro';
 
+const base = import.meta.env.BASE_URL;
+
 const toc = [
-  { label: 'Connecting via SSH',    id: 'ssh' },
   { label: 'SSH Keys',              id: 'ssh-keys' },
-  { label: 'GitHub on the Server',  id: 'github' },
+  { label: 'SSH Config & Alias',    id: 'ssh' },
+  { label: 'VS Code & GitHub',      id: 'vscode' },
+  { label: 'Transferring Files',    id: 'transfer' },
   { label: 'Navigation & Files',    id: 'navigation' },
-  { label: 'Monitoring Resources',  id: 'monitoring' },
   { label: 'Tmux',                  id: 'tmux' },
 ];
 ---
 
-<DocsLayout title="Shell & Terminal" toc={toc}>
+<DocsLayout title="Shell & Remote Access" toc={toc}>
 
-  <h1>Shell & Terminal</h1>
-
-  <p>
-    The command line is your primary interface to the AIRLab servers. This guide covers
-    the basics of connecting, navigating, and managing your work through the shell.
-  </p>
-
-  <!-- ── SSH ────────────────────────────────────────────────────────────────── -->
-  <h2 id="ssh">Connecting via SSH</h2>
+  <h1>Shell & Remote Access</h1>
 
   <p>
-    SSH (Secure Shell) creates an encrypted connection to the server. The server IPs are
-    internal — ask your co-supervisor for them. To avoid typing raw IPs, add them to
-    your system's hosts file as memorable aliases:
+    The command line is your primary interface to polimi-cluster. This guide covers how to connect
+    to the login node comfortably and securely, move files around, and keep terminal sessions alive.
+    For running jobs, see <a href={`${base}docs/slurm`}>Running Jobs</a>.
   </p>
-
-  <OsCodeBlock
-    lang="text"
-    linuxFilename="/etc/hosts"
-    windowsFilename={`C:\\Windows\\System32\\drivers\\etc\\hosts`}
-    linuxCode={`# AIRLab servers — replace with actual IPs from your co-supervisor
-<WESTWORLD_IP>   westworld ww
-<ELYSIUM_IP>     elysium   ely`}
-  />
-
-  <p data-os-content="windows">
-    <strong>Note:</strong> You cannot directly overwrite this file with Notepad.
-    Save the edited file anywhere on your desktop, then drag and drop it into
-    <code>C:\Windows\System32\drivers\etc\</code> to overwrite it
-    (administrator permission required).
-  </p>
-
-  <p>
-    Then configure your SSH client to handle usernames and key selection automatically.
-    Add the following to your SSH config file (create it if it doesn't exist):
-  </p>
-
-  <OsCodeBlock
-    lang="text"
-    linuxFilename="~/.ssh/config"
-    windowsFilename={`C:\\Users\\YourName\\.ssh\\config`}
-    linuxCode={`# Westworld
-Host ww westworld
-  HostName westworld
-  User lastname    <-- replace with your actual username on the server
-  IdentityFile ~/.ssh/id_ed25519_airlab
-  ServerAliveInterval 60
-  ServerAliveCountMax 3
-
-# Elysium
-Host ely elysium
-  HostName elysium
-  User lastname    <-- replace with your actual username on the server
-  IdentityFile ~/.ssh/id_ed25519_airlab
-  ServerAliveInterval 60
-  ServerAliveCountMax 3`}
-  />
-
-  <p>
-    With this in place, connecting to any server is just:
-  </p>
-
-  <CodeBlock lang="bash" filename="local machine" code={`ssh ww      # westworld
-ssh ely     # elysium`} />
-
-  <div class="callout callout-info">
-    <svg class="w-5 h-5 flex-shrink-0 mt-0.5 text-accent-500" fill="none" stroke="currentColor"
-         stroke-width="2" viewBox="0 0 24 24">
-      <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/>
-      <line x1="12" y1="16" x2="12.01" y2="16"/>
-    </svg>
-    <p class="text-sm leading-relaxed">
-      After editing <code>~/.ssh/config</code>, host names get tab-autocomplete in your terminal.
-      You can also open remote folders directly in VS Code with the <strong>Remote - SSH</strong>
-      extension using these same aliases.
-    </p>
-  </div>
 
   <!-- ── SSH Keys ────────────────────────────────────────────────────────────── -->
   <h2 id="ssh-keys">SSH Keys</h2>
 
   <p>
     Password authentication is convenient but weaker than key-based authentication.
-    Set up an SSH key pair once and never type your password over the network again.
+    Set up an SSH key pair once and you will never type your password over the network again.
+    Run these commands on <strong>your own computer</strong>:
   </p>
 
   <OsCodeBlock
     lang="bash"
     linuxFilename="local machine"
-    windowsFilename="local machine"
+    windowsFilename="local machine (PowerShell)"
     linuxCode={`# 1. Generate a key pair (Ed25519 is the modern standard)
-# The -C comment is optional but helps identify the key later
-ssh-keygen -t ed25519 -C "airlab" -f ~/.ssh/id_ed25519_airlab
+ssh-keygen -t ed25519
 
-# 2. Copy the public key to every server you use
-ssh-copy-id -i ~/.ssh/id_ed25519_airlab.pub lastname@<westworld_ip>
-ssh-copy-id -i ~/.ssh/id_ed25519_airlab.pub lastname@<elysium_ip>
+# 2. Install the public key on the cluster
+ssh-copy-id USERNAME@LOGIN_IP
 
 # 3. Test key login — no password prompt means it worked
-ssh ww`}
+ssh USERNAME@LOGIN_IP`}
     windowsCode={`# 1. Generate a key pair (Ed25519 is the modern standard)
-# The -C comment is optional but helps identify the key later
-ssh-keygen -t ed25519 -C "airlab" -f C:\\Users\\YourName\\.ssh\\id_ed25519_airlab
+ssh-keygen -t ed25519
 
-# 2. Windows does not have ssh-copy-id — use PowerShell instead
-type C:\\Users\\YourName\\.ssh\\id_ed25519_airlab.pub | ssh lastname@<westworld_ip> "mkdir -p .ssh && cat >> .ssh/authorized_keys"
-type C:\\Users\\YourName\\.ssh\\id_ed25519_airlab.pub | ssh lastname@<elysium_ip> "mkdir -p .ssh && cat >> .ssh/authorized_keys"
+# 2. Windows does not have ssh-copy-id — pipe the public key over SSH instead
+type $env:USERPROFILE\\.ssh\\id_ed25519.pub | ssh USERNAME@LOGIN_IP "mkdir -p ~/.ssh && cat >> ~/.ssh/authorized_keys"
 
 # 3. Test key login — no password prompt means it worked
-ssh ww`}
+ssh USERNAME@LOGIN_IP`}
   />
 
-  <!-- ── GitHub on the Server ────────────────────────────────────────────────── -->
-  <h2 id="github">GitHub on the Server</h2>
+  <div class="callout callout-danger">
+    <svg class="w-5 h-5 flex-shrink-0 mt-0.5 text-red-500" fill="none" stroke="currentColor"
+         stroke-width="2" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="10"/>
+      <line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
+    </svg>
+    <div class="text-sm leading-relaxed">
+      Keep the <strong>private</strong> key (the file <em>without</em> <code>.pub</code>) on your own computer.
+      Never copy it to the cluster or send it to anyone.
+    </div>
+  </div>
+
+  <!-- ── SSH Config ─────────────────────────────────────────────────────────── -->
+  <h2 id="ssh">SSH Config & Alias</h2>
 
   <p>
-    You will want to <code>git clone</code> and <code>git push</code> directly from the
-    compute servers. The easiest way is to connect remotely with VSCode's <strong>Remote - SSH</strong> extension and use the built-in Git integration.
-    More on that in the <a href={`${import.meta.env.BASE_URL}docs/docker#vscode`}>VS Code Integration</a> section of the Docker guide.
+    Instead of typing the username and IP every time, add a host alias to your SSH config file
+    (create it if it does not exist). The IP address is used on purpose: it works even when the
+    VPN does not resolve internal hostnames.
   </p>
+
+  <OsCodeBlock
+    lang="text"
+    linuxFilename="~/.ssh/config"
+    windowsFilename={`C:\\Users\\YourName\\.ssh\\config`}
+    linuxCode={`# polimi-cluster login node (matteucci-vm-1)
+Host polimi-cluster pc
+  HostName LOGIN_IP    <-- replace with the login node IP
+  User USERNAME    <-- replace with your cluster username
+  IdentityFile ~/.ssh/id_ed25519
+  ServerAliveInterval 60
+  ServerAliveCountMax 3`}
+  />
+
+  <p>
+    With this in place, connecting is just:
+  </p>
+
+  <CodeBlock lang="bash" filename="local machine" code={`ssh pc`} />
+
+  <!-- ── VS Code & GitHub ──────────────────────────────────────────────────── -->
+  <h2 id="vscode">VS Code & GitHub</h2>
+
+  <p>
+    The <strong>Remote - SSH</strong> extension lets you edit files on the cluster from your local
+    VS Code. Once your SSH config is set up, open the Command Palette (<kbd>Ctrl+Shift+P</kbd>) →
+    <em>Remote-SSH: Connect to Host…</em> and pick <code>polimi-cluster</code>. Then open your project
+    folder via <em>File → Open Folder</em>, or clone a repository with VS Code's built-in Git
+    integration (<em>Clone from GitHub</em>), which also handles GitHub authentication for
+    <code>git push</code> and <code>git pull</code>.
+  </p>
+
+  <div class="callout callout-warning">
+    <svg class="w-5 h-5 flex-shrink-0 mt-0.5 text-yellow-500" fill="none" stroke="currentColor"
+         stroke-width="2" viewBox="0 0 24 24">
+      <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+      <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+    </svg>
+    <div class="text-sm leading-relaxed">
+      Remote - SSH connects you to the <strong>login node</strong>. Use it to edit code and scripts only.
+      Do not run training scripts or notebooks from VS Code's integrated terminal: submit them to Slurm.
+    </div>
+  </div>
+
+  <!-- ── Transferring Files ────────────────────────────────────────────────── -->
+  <h2 id="transfer">Transferring Files</h2>
+
+  <p>
+    Use <code>rsync</code> (or <code>scp</code>) from your own computer to copy files to and from the
+    cluster. Both work with the SSH alias defined above. <code>rsync</code> only transfers what changed,
+    and can resume interrupted transfers, so prefer it for datasets.
+  </p>
+
+  <CodeBlock
+    lang="bash"
+    filename="local machine"
+    code={`# Upload a local folder to your private dataset directory
+rsync -avP ./my_dataset/ pc:~/dataset/private/my_dataset/
+
+# Download results from the cluster
+rsync -avP pc:~/my_project/results/ ./results/
+
+# Copy a single file
+scp config.yaml pc:~/my_project/configs/`}
+  />
 
   <!-- ── Navigation ─────────────────────────────────────────────────────────── -->
   <h2 id="navigation">Common Navigation & File Operations</h2>
@@ -152,8 +158,9 @@ ssh ww`}
       <tr><td><code>mv</code></td><td>Move or rename</td><td><code>mv old_name.py new_name.py</code></td></tr>
       <tr><td><code>rm</code></td><td>Delete files</td><td><code>rm -rf results/old_run/</code></td></tr>
       <tr><td><code>cat</code></td><td>Print file contents</td><td><code>cat config.yaml</code></td></tr>
-      <tr><td><code>less</code></td><td>Page through a file</td><td><code>less training.log</code></td></tr>
-      <tr><td><code>grep</code></td><td>Search inside files</td><td><code>grep "val_loss" training.log</code></td></tr>
+      <tr><td><code>less</code></td><td>Page through a file</td><td><code>less train-1234.out</code></td></tr>
+      <tr><td><code>tail -f</code></td><td>Follow a growing log file</td><td><code>tail -f train-1234.out</code></td></tr>
+      <tr><td><code>grep</code></td><td>Search inside files</td><td><code>grep "val_loss" train-1234.out</code></td></tr>
       <tr><td><code>find</code></td><td>Search for files</td><td><code>find . -name "*.pt"</code></td></tr>
       <tr><td><code>du</code></td><td>Disk usage</td><td><code>du -sh ~/dataset/private/*</code></td></tr>
     </tbody>
@@ -166,9 +173,8 @@ ssh ww`}
       <line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
     </svg>
     <div class="text-sm leading-relaxed">
-      <strong><code>rm -rf</code> has no undo.</strong> On a shared server there is no
-      trash bin and no backup for your home directory. Double-check the path before
-      pressing Enter, every single time.
+      <strong><code>rm -rf</code> has no undo.</strong> There is no trash bin on the cluster.
+      Double-check the path before pressing Enter, every single time.
     </div>
   </div>
 
@@ -177,54 +183,32 @@ ssh ww`}
   <CodeBlock
     lang="bash"
     code={`# Search command history
-history | grep docker
+history | grep sbatch
 
 # Count lines in a file
-wc -l training.log
+wc -l labels.txt
 
-# Sort and unique a list
-cat labels.txt | sort | uniq -c | sort -rn
+# Sort and count unique entries
+sort labels.txt | uniq -c | sort -rn
 
 # Extract a .tar.gz archive into a specific directory
-tar -xzf dataset.tar.gz -C ~/storage_megaverse`}
-  />
-
-  <!-- ── Monitoring ──────────────────────────────────────────────────────────── -->
-  <h2 id="monitoring">Monitoring Resources</h2>
-
-  <p>
-    Before starting an experiment, always check that the resources you booked are
-    actually free.
-  </p>
-
-  <CodeBlock
-    lang="bash"
-    code={`# CPU, RAM, and per-process stats (interactive — press q to quit)
-htop
-
-# Full GPU status: memory usage, utilisation, running processes
-nvidia-smi
-
-# Find who owns a process by surname
-ps aux | grep surname
-
-# Watch GPU utilisation live every 2 seconds
-watch -n 2 nvidia-smi`}
+tar -xzf dataset.tar.gz -C ~/dataset/private/`}
   />
 
   <!-- ── tmux ───────────────────────────────────────────────────────────────── -->
   <h2 id="tmux">Tmux — Persistent Terminal Sessions</h2>
 
   <p>
-    Training a neural network can take hours or days. If your SSH connection drops —
-    due to a network hiccup, a laptop going to sleep, or a VPN timeout — any process
-    running directly in your terminal will be killed. <strong>tmux</strong> solves this
-    by running your shell sessions on the server, completely independent of your connection.
+    If your SSH connection drops (because of a network hiccup, a laptop going to sleep, or a VPN
+    timeout), anything running directly in your terminal is killed. <strong>Batch jobs submitted with
+    <code>sbatch</code> are not affected</strong>: they run on the compute nodes regardless of your
+    connection. tmux is still useful on the login node to keep an <strong>interactive</strong>
+    <code>srun</code> session, a long <code>rsync</code>, or your editor open across disconnections.
     Detach, close your laptop, and reattach later to find everything exactly as you left it.
   </p>
 
   <p>
-    The key concept: <kbd>Ctrl-b</kbd> is the <em>prefix</em> — press it before every
+    The key concept: <kbd>Ctrl-b</kbd> is the <em>prefix</em>. Press it before every
     tmux shortcut, then release it before pressing the next key.
     A full cheat sheet is available <a href="https://tmuxcheatsheet.com/" target="_blank" rel="noopener noreferrer">here</a>.
   </p>
@@ -233,19 +217,32 @@ watch -n 2 nvidia-smi`}
 
   <CodeBlock
     lang="bash"
-    filename="westworld"
-    code={`# Create a named session (use a meaningful name — your project or experiment)
-tmux new -s resnet_training
+    filename="polimi-cluster"
+    code={`# Create a named session (use a meaningful name — your project or task)
+tmux new -s debug_session
 
-# Inside the session, start your experiment as normal
-run-docker 0 0-8 "python train.py"
+# Inside the session, start an interactive allocation as normal
+srun --partition=debug --time=01:00:00 --cpus-per-task=2 --mem=4G --pty bash
 
-# Detach — your experiment keeps running on the server
+# Detach — the session (and the allocation) keeps running
 # Press: Ctrl-b  then  d
 
 # Later, reattach from any SSH session
-tmux attach -t resnet_training`}
+tmux attach -t debug_session`}
   />
+
+  <div class="callout callout-warning">
+    <svg class="w-5 h-5 flex-shrink-0 mt-0.5 text-yellow-500" fill="none" stroke="currentColor"
+         stroke-width="2" viewBox="0 0 24 24">
+      <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+      <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+    </svg>
+    <div class="text-sm leading-relaxed">
+      <strong>Clean up after yourself.</strong> An idle interactive allocation left open in tmux still
+      holds its CPUs, memory, and GPUs until it hits its time limit. <code>exit</code> the allocation as soon as
+      you are done, and kill sessions you no longer need with <code>tmux kill-session -t name</code>.
+    </div>
+  </div>
 
   <h3>Sessions</h3>
 
@@ -262,18 +259,6 @@ tmux attach -t resnet_training`}
       <tr><td>Kill a session</td><td><code>tmux kill-session -t name</code></td></tr>
     </tbody>
   </table>
-
-  <div class="callout callout-warning">
-    <svg class="w-5 h-5 flex-shrink-0 mt-0.5 text-yellow-500" fill="none" stroke="currentColor"
-         stroke-width="2" viewBox="0 0 24 24">
-      <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-      <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
-    </svg>
-    <div class="text-sm leading-relaxed">
-      <strong>Clean up after yourself.</strong> Kill sessions when experiments finish with
-      <code>tmux kill-session -t name</code>.
-    </div>
-  </div>
 
   <h3>Windows & Panes</h3>
 
@@ -324,7 +309,7 @@ set -g history-limit 50000
 set -sg escape-time 0
 
 # Reload config with: Ctrl-b r
-bind r source-file ~/.tmux.conf \; display-message "Config reloaded"
+bind r source-file ~/.tmux.conf \\; display-message "Config reloaded"
 
 # Intuitive pane splitting (opens in current directory)
 bind | split-window -h -c "#{pane_current_path}"

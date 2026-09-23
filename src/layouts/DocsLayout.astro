@@ -8,20 +8,22 @@ interface Props {
   description?: string;
   /** Table-of-contents entries: { label, id } shown on the right rail */
   toc?: { label: string; id: string }[];
+  /** Hide the page from search engines (unlisted legacy pages) */
+  noindex?: boolean;
 }
 
-const { title, description, toc = [] } = Astro.props;
+const { title, description, toc = [], noindex = false } = Astro.props;
 const currentPath = new URL(Astro.request.url).pathname;
 ---
 
 <!doctype html>
 <html lang="en">
   <head>
-    <BaseHead title={title} description={description} />
+    <BaseHead title={title} description={description} noindex={noindex} />
   </head>
 
   <body class="min-h-screen bg-white overflow-y-scroll">
-    <Header currentPath={currentPath} />
+    <Header />
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex gap-8 pt-8 pb-24">

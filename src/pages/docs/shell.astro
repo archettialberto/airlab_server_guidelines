@@ -42,18 +42,18 @@ const toc = [
 ssh-keygen -t ed25519
 
 # 2. Install the public key on the cluster
-ssh-copy-id USERNAME@LOGIN_IP
+ssh-copy-id USERNAME@10.75.4.86
 
 # 3. Test key login — no password prompt means it worked
-ssh USERNAME@LOGIN_IP`}
+ssh USERNAME@10.75.4.86`}
     windowsCode={`# 1. Generate a key pair (Ed25519 is the modern standard)
 ssh-keygen -t ed25519
 
 # 2. Windows does not have ssh-copy-id — pipe the public key over SSH instead
-type $env:USERPROFILE\\.ssh\\id_ed25519.pub | ssh USERNAME@LOGIN_IP "mkdir -p ~/.ssh && cat >> ~/.ssh/authorized_keys"
+type $env:USERPROFILE\\.ssh\\id_ed25519.pub | ssh USERNAME@10.75.4.86 "mkdir -p ~/.ssh && cat >> ~/.ssh/authorized_keys"
 
 # 3. Test key login — no password prompt means it worked
-ssh USERNAME@LOGIN_IP`}
+ssh USERNAME@10.75.4.86`}
   />
 
   <div class="callout callout-danger">
@@ -83,7 +83,7 @@ ssh USERNAME@LOGIN_IP`}
     windowsFilename={`C:\\Users\\YourName\\.ssh\\config`}
     linuxCode={`# polimi-cluster login node (matteucci-vm-1)
 Host polimi-cluster pc
-  HostName LOGIN_IP    <-- replace with the login node IP
+  HostName 10.75.4.86
   User USERNAME    <-- replace with your cluster username
   IdentityFile ~/.ssh/id_ed25519
   ServerAliveInterval 60

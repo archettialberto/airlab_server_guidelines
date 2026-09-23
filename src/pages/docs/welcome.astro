@@ -47,8 +47,8 @@ const toc = [
         <td>Ask your co-supervisor to send a VPN access request to the department ICT. Then, follow this guide to set up <a href="https://www.ict.polimi.it/network/vpn/?lang=en" target="_blank" rel="noopener">GlobalProtect</a></td>
       </tr>
       <tr>
-        <td>Cluster account (username, temporary password, login node IP)</td>
-        <td>Ask your co-supervisor to request a cluster account for you. The login node IP is internal and is not published here</td>
+        <td>Cluster account (username + temporary password)</td>
+        <td>Ask your co-supervisor to request a cluster account for you</td>
       </tr>
       <tr>
         <td>AIRLab Discord server invite</td>
@@ -114,14 +114,17 @@ const toc = [
   <h2 id="access">First Login</h2>
 
   <p>
-    Connect to the login node with the username and IP address provided to you. Throughout this
-    guide, replace <code>LOGIN_IP</code> with that address:
+    Connect to the login node with the username provided to you. When you are connected through
+    the VPN, internal DNS may not resolve hostnames, so the IP address is the most reliable option:
   </p>
 
   <CodeBlock
     lang="bash"
     filename="local machine"
-    code={`ssh USERNAME@LOGIN_IP`}
+    code={`ssh USERNAME@10.75.4.86
+
+# Or, when the hostname resolves:
+ssh USERNAME@matteucci-vm-1.inside.dei.polimi.it`}
   />
 
   <p>
@@ -268,7 +271,7 @@ df -h ~       # free space on the underlying storage`}
   </p>
 
   <ul class="!list-none !ml-0">
-    <li>☐ I can log in with <code>ssh USERNAME@LOGIN_IP</code>.</li>
+    <li>☐ I can log in with <code>ssh USERNAME@10.75.4.86</code>.</li>
     <li>☐ I changed my temporary password.</li>
     <li>☐ I know that <code>~</code> is <code>/megaverse/storage/USERNAME</code>.</li>
     <li>☐ I know where <code>~/dataset/shared</code> and <code>~/dataset/private</code> are.</li>

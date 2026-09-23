@@ -1,6 +1,6 @@
 {
-  "name": "server-guide-docs",
-  "version": "0.1.0",
+  "name": "atlas-airlab-handbook",
+  "version": "3.0.0",
   "private": true,
   "scripts": {
     "dev": "astro dev",

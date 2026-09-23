@@ -1,0 +1,20 @@
+---
+/**
+ * LegacyBanner — Warning shown at the top of every archived page describing
+ * the decommissioned Westworld / Elysium servers.
+ */
+---
+
+<div class="callout callout-warning">
+  <svg class="w-5 h-5 flex-shrink-0 mt-0.5 text-yellow-500" fill="none" stroke="currentColor"
+       stroke-width="2" viewBox="0 0 24 24">
+    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+    <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+  </svg>
+  <div class="text-sm leading-relaxed">
+    <strong>Legacy documentation.</strong> This page describes the old <strong>Westworld</strong>
+    and <strong>Elysium</strong> servers, which have been replaced by the Slurm cluster
+    <strong>polimi-cluster</strong>. It is kept for reference only. For current instructions, start from the
+    <a href={`${import.meta.env.BASE_URL}docs/welcome`}>Cluster Guide</a>.
+  </div>
+</div>

@@ -1,0 +1,355 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+import CodeBlock from '../../components/CodeBlock.astro';
+
+const base = import.meta.env.BASE_URL;
+
+const toc = [
+  { label: 'Slurm Concepts',        id: 'concepts' },
+  { label: 'Partitions & QoS',      id: 'partitions' },
+  { label: 'Essential Commands',    id: 'commands' },
+  { label: 'Interactive Jobs',      id: 'interactive' },
+  { label: 'Batch Jobs',            id: 'batch' },
+  { label: 'CPU Jobs',              id: 'cpu' },
+  { label: 'GPU Jobs',              id: 'gpu' },
+  { label: 'Recommended Workflow',  id: 'workflow' },
+  { label: 'Troubleshooting',       id: 'troubleshooting' },
+];
+---
+
+<DocsLayout title="Running Jobs (Slurm)" toc={toc}>
+
+  <h1>Running Jobs (Slurm)</h1>
+
+  <p>
+    On polimi-cluster, every workload runs as a <strong>Slurm job</strong>. You describe the
+    resources you need, Slurm queues the request, and when those resources are free it starts your
+    job on a suitable compute node. This page takes you from your first test job to a full GPU
+    training run.
+  </p>
+
+  <!-- ── Concepts ──────────────────────────────────────────────────────────── -->
+  <h2 id="concepts">Slurm Concepts</h2>
+
+  <p>
+    Before your program starts, Slurm needs to know which resources it may use:
+  </p>
+
+  <table>
+    <thead>
+      <tr><th>Term</th><th>Meaning</th><th>Option</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><strong>Partition</strong></td><td>The queue in which the job waits and runs</td><td class="whitespace-nowrap"><code>--partition=normal</code></td></tr>
+      <tr><td><strong>Time</strong></td><td>Maximum runtime (wall time). The job is stopped when it runs out</td><td class="whitespace-nowrap"><code>--time=04:00:00</code></td></tr>
+      <tr><td><strong>CPUs</strong></td><td>Number of CPU cores requested</td><td class="whitespace-nowrap"><code>--cpus-per-task=8</code></td></tr>
+      <tr><td><strong>Memory</strong></td><td>RAM requested for the job</td><td class="whitespace-nowrap"><code>--mem=32G</code></td></tr>
+      <tr><td><strong>GPUs</strong></td><td>Number of GPUs requested, if any</td><td class="whitespace-nowrap"><code>--gres=gpu:1</code></td></tr>
+      <tr><td><strong>Job ID</strong></td><td>Unique identifier returned after submission</td><td>—</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout callout-warning">
+    <svg class="w-5 h-5 flex-shrink-0 mt-0.5 text-yellow-500" fill="none" stroke="currentColor"
+         stroke-width="2" viewBox="0 0 24 24">
+      <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+      <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+    </svg>
+    <div class="text-sm leading-relaxed">
+      <strong>Request only what you need.</strong> Over-requesting memory, GPUs, or wall time makes your
+      job wait longer and keeps resources idle for everyone else. Under-requesting is not safe either:
+      if your job exceeds its memory allocation, Slurm can kill it. If it exceeds its time limit, it is stopped.
+      Save checkpoints regularly so a stopped job can be resumed.
+    </div>
+  </div>
+
+  <!-- ── Partitions & QoS ─────────────────────────────────────────────────── -->
+  <h2 id="partitions">Partitions & QoS</h2>
+
+  <p>
+    The cluster has four standard partitions:
+  </p>
+
+  <table>
+    <thead>
+      <tr><th>Partition</th><th>Intended use</th><th>Maximum runtime</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>debug</code></td><td>Short tests and troubleshooting</td><td>2 hours</td></tr>
+      <tr><td><code>normal</code></td><td>Regular jobs</td><td>24 hours</td></tr>
+      <tr><td><code>bulk</code></td><td>Longer, lower-priority jobs</td><td>5 days</td></tr>
+      <tr><td><code>cpu</code></td><td>CPU-only jobs</td><td>5 days</td></tr>
+    </tbody>
+  </table>
+
+  <p>
+    Your account has one or more <strong>QoS</strong> (Quality of Service) assignments. They determine
+    which partitions you may use and influence your jobs' priority. Use a partition only if it is
+    available through your QoS. Check your assignments with:
+  </p>
+
+  <CodeBlock
+    lang="bash"
+    filename="polimi-cluster"
+    code={`sacctmgr show user "$USER" withassoc format=User,Account,QOS`}
+  />
+
+  <!-- ── Essential Commands ───────────────────────────────────────────────── -->
+  <h2 id="commands">Essential Commands</h2>
+
+  <table>
+    <thead>
+      <tr><th>Command</th><th>What it does</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>sinfo</code></td><td>Show nodes and partitions, and their current state</td></tr>
+      <tr><td><code>squeue --me</code></td><td>Show only your queued and running jobs</td></tr>
+      <tr><td><code>sbatch script.sbatch</code></td><td>Submit a batch job</td></tr>
+      <tr><td><code>srun ... --pty bash</code></td><td>Start an interactive shell on a compute node</td></tr>
+      <tr><td><code>scontrol show job JOBID</code></td><td>Show the full details of a job</td></tr>
+      <tr><td><code>scancel JOBID</code></td><td>Cancel a queued or running job</td></tr>
+      <tr><td><code>sacct -j JOBID</code></td><td>Review a completed or failed job</td></tr>
+    </tbody>
+  </table>
+
+  <p>
+    After a job ends, <code>sacct</code> shows how much of the requested resources it actually used.
+    Use it to fine-tune your next requests:
+  </p>
+
+  <CodeBlock
+    lang="bash"
+    filename="polimi-cluster"
+    code={`sacct -j JOBID --format=JobID,JobName,State,Elapsed,AllocCPUS,ReqMem,ExitCode`}
+  />
+
+  <!-- ── Interactive ──────────────────────────────────────────────────────── -->
+  <h2 id="interactive">Your First Interactive Job</h2>
+
+  <p>
+    An interactive allocation gives you a shell on a compute node. It is useful for testing
+    commands and debugging. Request a small allocation on the <code>debug</code> partition:
+  </p>
+
+  <CodeBlock
+    lang="bash"
+    filename="polimi-cluster"
+    code={`srun --partition=debug --time=00:10:00 --cpus-per-task=1 --mem=2G --pty bash`}
+  />
+
+  <p>
+    Once Slurm starts the shell, you are on a compute node. Check it:
+  </p>
+
+  <CodeBlock
+    lang="bash"
+    filename="compute node"
+    code={`hostname    # which node you landed on
+nproc       # CPUs available to you
+free -h     # memory
+
+exit        # end the allocation when finished`}
+  />
+
+  <div class="callout callout-info">
+    <svg class="w-5 h-5 flex-shrink-0 mt-0.5 text-accent-500" fill="none" stroke="currentColor"
+         stroke-width="2" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/>
+      <line x1="12" y1="16" x2="12.01" y2="16"/>
+    </svg>
+    <p class="text-sm leading-relaxed">
+      An interactive session ends if your SSH connection drops. Start it inside
+      <a href={`${base}docs/shell#tmux`}>tmux</a> if you need it to survive disconnections, and always
+      <code>exit</code> as soon as you are done: an idle allocation still blocks its resources.
+    </p>
+  </div>
+
+  <!-- ── Batch ────────────────────────────────────────────────────────────── -->
+  <h2 id="batch">Your First Batch Job</h2>
+
+  <p>
+    Batch jobs are how real work runs on the cluster. You write a script whose
+    <code>#SBATCH</code> lines declare the resources, submit it, and Slurm runs it unattended.
+    The job keeps running even if you log out. Create a file named <code>hello.sbatch</code>:
+  </p>
+
+  <CodeBlock
+    lang="bash"
+    filename="hello.sbatch"
+    code={`#!/bin/bash
+#SBATCH --job-name=hello
+#SBATCH --partition=debug
+#SBATCH --time=00:05:00
+#SBATCH --cpus-per-task=1
+#SBATCH --mem=1G
+#SBATCH --output=hello-%j.out
+
+hostname
+date`}
+  />
+
+  <p>
+    Submit it and check its status:
+  </p>
+
+  <CodeBlock
+    lang="bash"
+    filename="polimi-cluster"
+    code={`sbatch hello.sbatch     # prints: Submitted batch job JOBID
+squeue --me             # shows the job while it is pending or running`}
+  />
+
+  <p>
+    After it finishes, read the output. <code>%j</code> in the <code>--output</code> filename is
+    replaced by the job ID:
+  </p>
+
+  <CodeBlock
+    lang="bash"
+    filename="polimi-cluster"
+    code={`cat hello-JOBID.out`}
+  />
+
+  <!-- ── CPU ──────────────────────────────────────────────────────────────── -->
+  <h2 id="cpu">CPU Jobs</h2>
+
+  <p>
+    Use the <code>cpu</code> partition for CPU-only workloads (data preprocessing, analysis,
+    environment creation) when it is available to your account. Writing standard output and errors to
+    separate files makes failures easier to find:
+  </p>
+
+  <CodeBlock
+    lang="bash"
+    filename="cpu-analysis.sbatch"
+    code={`#!/bin/bash
+#SBATCH --job-name=cpu-analysis
+#SBATCH --partition=cpu
+#SBATCH --time=04:00:00
+#SBATCH --cpus-per-task=8
+#SBATCH --mem=32G
+#SBATCH --output=cpu-analysis-%j.out
+#SBATCH --error=cpu-analysis-%j.err
+
+python analysis.py`}
+  />
+
+  <p>
+    Start small, measure actual usage with <code>sacct</code>, then adjust future requests.
+  </p>
+
+  <!-- ── GPU ──────────────────────────────────────────────────────────────── -->
+  <h2 id="gpu">GPU Jobs</h2>
+
+  <p>
+    Always request GPUs through Slurm with <code>--gres=gpu:N</code>. Slurm assigns specific GPUs to
+    your job and makes only those visible to it.
+  </p>
+
+  <div class="callout callout-danger">
+    <svg class="w-5 h-5 flex-shrink-0 mt-0.5 text-red-500" fill="none" stroke="currentColor"
+         stroke-width="2" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="10"/>
+      <line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
+    </svg>
+    <div class="text-sm leading-relaxed">
+      Do not choose a GPU manually and do not set <code>CUDA_VISIBLE_DEVICES</code> yourself.
+      Slurm handles GPU assignment.
+    </div>
+  </div>
+
+  <p>
+    A one-GPU training job looks like this:
+  </p>
+
+  <CodeBlock
+    lang="bash"
+    filename="gpu-train.sbatch"
+    code={`#!/bin/bash
+#SBATCH --job-name=gpu-train
+#SBATCH --partition=normal
+#SBATCH --time=01:00:00
+#SBATCH --cpus-per-task=4
+#SBATCH --mem=16G
+#SBATCH --gres=gpu:1
+#SBATCH --output=gpu-train-%j.out
+#SBATCH --error=gpu-train-%j.err
+
+module load miniconda/25.5.1
+conda activate my-project
+
+nvidia-smi          # logs which GPU the job received
+python train.py`}
+  />
+
+  <p>
+    The <code>module load</code> and <code>conda activate</code> lines load your Python environment.
+    See <a href={`${base}docs/environments`}>Software &amp; Conda</a> for how to create it.
+    If your code needs more than one GPU, request the exact number:
+  </p>
+
+  <CodeBlock
+    lang="bash"
+    code={`#SBATCH --gres=gpu:2`}
+  />
+
+  <p>
+    Check that your framework actually uses the requested GPU count before running a long
+    experiment. For example, <code>torch.cuda.device_count()</code> should match <code>N</code>.
+  </p>
+
+  <!-- ── Workflow ─────────────────────────────────────────────────────────── -->
+  <h2 id="workflow">Recommended Workflow</h2>
+
+  <ol class="steps">
+    <li><span>Log in to the login node.</span></li>
+    <li><span>Put code in your home directory and data in your dataset directories.</span></li>
+    <li><span>Create or update a reproducible <a href={`${base}docs/environments`}>Conda environment</a> through Slurm.</span></li>
+    <li><span>Test the code with a short job on the <code>debug</code> partition.</span></li>
+    <li><span>Check the logs and confirm the requested resources are adequate.</span></li>
+    <li><span>Submit the actual job to the appropriate allowed partition.</span></li>
+    <li><span>Monitor it with <code>squeue --me</code>.</span></li>
+    <li><span>Inspect completed jobs with <code>sacct</code> and keep the output logs.</span></li>
+  </ol>
+
+  <!-- ── Troubleshooting ──────────────────────────────────────────────────── -->
+  <h2 id="troubleshooting">Troubleshooting</h2>
+
+  <table>
+    <thead>
+      <tr><th>Problem</th><th>First checks</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Job is pending</td>
+        <td>Run <code>squeue --me</code> and inspect the reason column (<code>NODELIST(REASON)</code>). Check the requested resources and partition.</td>
+      </tr>
+      <tr>
+        <td>Job disappeared or failed</td>
+        <td>Read the <code>*.err</code> and <code>*.out</code> files. Run <code>sacct -j JOBID</code>.</td>
+      </tr>
+      <tr>
+        <td>Out-of-memory failure</td>
+        <td>Request more memory, or reduce the program's memory use.</td>
+      </tr>
+      <tr>
+        <td>GPU program does not see a GPU</td>
+        <td>Confirm the script contains <code>#SBATCH --gres=gpu:N</code> and run <code>nvidia-smi</code> inside the allocation.</td>
+      </tr>
+      <tr>
+        <td>Command works on the login node but not in a job</td>
+        <td>Load the same modules and activate the same Conda environment in the Slurm script.</td>
+      </tr>
+      <tr>
+        <td>Cannot connect through VPN</td>
+        <td>Use <code>10.75.4.86</code> instead of the hostname.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>
+    Still stuck? Ask on Discord, following the instructions in
+    <a href={`${base}docs/welcome#help`}>Getting Help</a>.
+  </p>
+
+</DocsLayout>

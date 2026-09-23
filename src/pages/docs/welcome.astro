@@ -2,13 +2,16 @@
 import DocsLayout from '../../layouts/DocsLayout.astro';
 import CodeBlock from '../../components/CodeBlock.astro';
 
+const base = import.meta.env.BASE_URL;
+
 const toc = [
   { label: 'Before You Start',      id: 'checklist' },
-  { label: 'Server Infrastructure', id: 'infrastructure' },
-  { label: 'Directory Layout',      id: 'directories' },
-  { label: 'Getting Access',        id: 'access' },
+  { label: 'The Cluster',           id: 'cluster' },
+  { label: 'First Login',           id: 'access' },
+  { label: 'Files & Storage',       id: 'storage' },
   { label: 'Core Responsibilities', id: 'responsibilities' },
-  { label: 'Resource Booking',      id: 'booking' },
+  { label: 'Getting Help',          id: 'help' },
+  { label: 'Ready Checklist',       id: 'ready' },
 ];
 ---
 
@@ -18,16 +21,16 @@ const toc = [
 
   <p>
     Welcome to the <strong>Artificial Intelligence and Robotics Lab (AIRLab)</strong> at
-    Politecnico di Milano. This handbook is your starting point. Read it carefully before
-    touching any shared resource.
+    Politecnico di Milano. This guide explains how to access <strong>polimi-cluster</strong>,
+    the AIRLab high-performance computing (HPC) cluster, how to store your data, and how to run
+    jobs with Slurm. Read it carefully before touching any shared resource.
   </p>
 
   <!-- ── Before You Start ──────────────────────────────────────────────────── -->
   <h2 id="checklist">Before You Start</h2>
 
   <p>
-    Before you can connect to anything, make sure you have obtained the following from your
-    co-supervisor:
+    Before you can connect to anything, make sure you have obtained the following:
   </p>
 
   <table>
@@ -41,127 +44,149 @@ const toc = [
       </tr>
       <tr>
         <td>VPN access</td>
-        <td>Ask your co-supervisor to send a VPN access request to the department ICT. Then, follow this guide to setup <a href="https://www.ict.polimi.it/network/vpn/?lang=en" target="_blank" rel="noopener">Global Protect</a></td>
+        <td>Ask your co-supervisor to send a VPN access request to the department ICT. Then, follow this guide to set up <a href="https://www.ict.polimi.it/network/vpn/?lang=en" target="_blank" rel="noopener">GlobalProtect</a></td>
       </tr>
       <tr>
-        <td>Server credentials (username + temporary password)</td>
-        <td>Ask your co-supervisor for the temporary password. The server username is your surname</td>
+        <td>Cluster account (username + temporary password)</td>
+        <td>Ask your co-supervisor to request a cluster account for you</td>
       </tr>
       <tr>
         <td>AIRLab Discord server invite</td>
-        <td>Ask your co-supervisor for a single-use invite link</td>
-      </tr>
-      <tr>
-        <td>Resource booking spreadsheet links</td>
-        <td>Ask your co-supervisor for the specific resource booking links</td>
+        <td>Ask your co-supervisor for a single-use invite link. Cluster support happens on Discord (see <a href="#help">Getting Help</a>)</td>
       </tr>
     </tbody>
   </table>
 
-  <!-- ── Server Infrastructure ──────────────────────────────────────────────── -->
-  <h2 id="infrastructure">Server Infrastructure</h2>
+  <!-- ── The Cluster ───────────────────────────────────────────────────────── -->
+  <h2 id="cluster">The Cluster</h2>
 
   <p>
-    AIRLab operates two GPU compute servers and one NAS (Network-Attached Storage).
-    All servers are located in the DEIB server room at Building 20. You interact with
-    them remotely — from the AIRLab LAN at Building 7, or from anywhere via VPN.
+    polimi-cluster is a group of compute servers managed by <strong>Slurm</strong>, a job scheduler.
+    You never work on a compute server directly. Instead, you log in to a single machine, the
+    <strong>login node</strong>, and ask Slurm to allocate CPUs, memory, and GPUs for your job.
+    Slurm then runs the job on a compute node that has those resources free.
   </p>
 
   <table>
     <thead>
-      <tr><th>Host</th><th>Role</th><th>GPUs</th><th>CPU cores</th><th>RAM</th></tr>
+      <tr><th>Compute node</th><th>CPUs</th><th>GPUs</th></tr>
     </thead>
     <tbody>
-      <tr>
-        <td><strong>westworld</strong></td>
-        <td>Compute</td>
-        <td>8 × 11 GB NVIDIA 1080 Ti</td>
-        <td>40</td>
-        <td>252 GB</td>
-      </tr>
-      <tr>
-        <td><strong>elysium</strong></td>
-        <td>Compute</td>
-        <td>4 × 24 GB RTX 6000 · 1 × 12 GB Titan X · 1 × 11 GB 1080 Ti</td>
-        <td>48</td>
-        <td>252 GB</td>
-      </tr>
-      <tr>
-        <td><strong>megaverse</strong></td>
-        <td>Storage</td>
-        <td>—</td>
-        <td>—</td>
-        <td>—</td>
-      </tr>
+      <tr><td><strong>akira</strong></td><td>256</td><td>6 × NVIDIA RTX A6000 (48 GB)</td></tr>
+      <tr><td><strong>magrathea</strong></td><td>112</td><td>8 × NVIDIA Quadro RTX 6000 (24 GB)</td></tr>
+      <tr><td><strong>arrakis</strong></td><td>192</td><td>6 × NVIDIA RTX PRO 6000 Blackwell (96 GB)</td></tr>
+      <tr><td><strong>caladan</strong></td><td>192</td><td>8 × NVIDIA L4 (24 GB)</td></tr>
     </tbody>
   </table>
 
-  <!-- ── Directory Layout ───────────────────────────────────────────────────── -->
-  <h2 id="directories">Directory Layout</h2>
-
   <p>
-    Each user has a home directory on every compute server. Most of the subdirectories
-    are symlinks pointing to your personal space on <code>megaverse</code> so that files are
-    accessible from all machines:
+    CPU counts are logical CPUs. The login node, <code>matteucci-vm-1</code>, also hosts the Slurm
+    controller, accounting, and monitoring services. It is <strong>not</strong> a compute node.
+    Run <code>sinfo</code> to see the current state of nodes and partitions.
   </p>
 
-  <CodeBlock
-    lang="text"
-    filename="/home/lastname/ (on any compute server)"
-    code={`/home/lastname/
-├── ...
-└── storage    → /megaverse/storage/lastname/      ← put your code and datasets here`}
-  />
-
   <p>
-    Keep your home directory itself light. Use <code>~/storage/</code> for project code, large datasets, and model checkpoints.
+    Use the login node <strong>only</strong> to:
   </p>
 
-  <div class="callout callout-warning">
-    <svg class="w-5 h-5 flex-shrink-0 mt-0.5 text-yellow-500" fill="none" stroke="currentColor"
+  <ul>
+    <li>edit code and Slurm scripts;</li>
+    <li>transfer and organise files;</li>
+    <li>submit, cancel, and monitor jobs.</li>
+  </ul>
+
+  <div class="callout callout-danger">
+    <svg class="w-5 h-5 flex-shrink-0 mt-0.5 text-red-500" fill="none" stroke="currentColor"
          stroke-width="2" viewBox="0 0 24 24">
-      <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-      <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+      <circle cx="12" cy="12" r="10"/>
+      <line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
     </svg>
     <div class="text-sm leading-relaxed">
-      <strong>Home quota.</strong> The home directory (<code>~</code>) has a hard quota of
-      <strong>20 GB</strong>. Exceeding it prevents saving files — including experiment
-      outputs — which can corrupt a running job. Check usage with <code>ncdu -x ~</code>.
+      <strong>No computation on the login node.</strong> Do not run training, data preprocessing,
+      simulations, notebooks, or CPU-intensive installations on <code>matteucci-vm-1</code>.
+      Everyone shares it. Submit these workloads to Slurm, as described in
+      <a href={`${base}docs/slurm`}>Running Jobs</a>. Do not SSH into a compute node to start work
+      either: Slurm decides where your job runs.
     </div>
   </div>
 
-  <!-- ── Getting Access ────────────────────────────────────────────────────── -->
-  <h2 id="access">Getting Access</h2>
+  <!-- ── First Login ───────────────────────────────────────────────────────── -->
+  <h2 id="access">First Login</h2>
 
   <p>
-    Your co-supervisor will create a Linux account for you. Your username follows the
-    convention <code>lastname</code> (all lowercase). Verify your login:
+    Connect to the login node with the username provided to you. When you are connected through
+    the VPN, internal DNS may not resolve hostnames, so the IP address is the most reliable option:
   </p>
 
   <CodeBlock
     lang="bash"
     filename="local machine"
-    code={`# IP addresses are internal — ask your co-supervisor for them
-ssh lastname@<server ip>`}
+    code={`ssh USERNAME@10.75.4.86
+
+# Or, when the hostname resolves:
+ssh USERNAME@matteucci-vm-1.inside.dei.polimi.it`}
   />
 
   <p>
-    Your password is set to expire on first login and you will be prompted to choose a
-    new one. If not, or to change it later:
+    On your first login, change the temporary password:
   </p>
 
   <CodeBlock
     lang="bash"
-    filename="westworld"
+    filename="polimi-cluster"
     code={`passwd
-# Enter current (temporary) password, then your new password twice`}
+# Enter the current (temporary) password, then your new password twice`}
   />
 
   <p>
-    After logging in, switch to <strong>SSH key authentication</strong> to avoid
-    typing passwords. See the
-    <a href={`${import.meta.env.BASE_URL}docs/shell#ssh`}>SSH</a> in the Shell guide.
+    Never share your password or your account with another person. After your first login,
+    set up an <strong>SSH key</strong> and a host alias so you can connect with a single short command.
+    The <a href={`${base}docs/shell#ssh-keys`}>Shell &amp; Remote Access</a> guide covers both.
   </p>
+
+  <!-- ── Files & Storage ───────────────────────────────────────────────────── -->
+  <h2 id="storage">Files & Storage</h2>
+
+  <p>
+    Your home directory is on <strong>megaverse</strong>, the lab's persistent shared network
+    storage, and is mounted on the login node and on every compute node. A file you save on the
+    login node is therefore immediately visible to your jobs.
+  </p>
+
+  <CodeBlock
+    lang="text"
+    filename="your home directory"
+    code={`~  =  /megaverse/storage/USERNAME      ← code, environments, inputs, results
+├── dataset/
+│   ├── shared/                        ← datasets shared across the lab
+│   └── private/                       ← your own datasets
+└── ...`}
+  />
+
+  <p>
+    Keep important data in your home or dataset directories, not in node-local temporary
+    locations. Check how much space you are using with:
+  </p>
+
+  <CodeBlock
+    lang="bash"
+    filename="polimi-cluster"
+    code={`du -sh ~      # size of your home directory
+df -h ~       # free space on the underlying storage`}
+  />
+
+  <div class="callout callout-info">
+    <svg class="w-5 h-5 flex-shrink-0 mt-0.5 text-accent-500" fill="none" stroke="currentColor"
+         stroke-width="2" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/>
+      <line x1="12" y1="16" x2="12.01" y2="16"/>
+    </svg>
+    <p class="text-sm leading-relaxed">
+      <strong>Avoid millions of tiny files.</strong> Network storage handles a few large files far better
+      than many small ones. Prefer archives or dataset formats (e.g., <code>tar</code>, HDF5, LMDB,
+      WebDataset shards) over a directory containing one file per sample.
+    </p>
+  </div>
 
   <!-- ── Core Responsibilities ──────────────────────────────────────────────── -->
   <h2 id="responsibilities">Core Responsibilities</h2>
@@ -176,16 +201,16 @@ ssh lastname@<server ip>`}
     </thead>
     <tbody>
       <tr>
-        <td><strong>Use Docker for all experiments</strong></td>
-        <td>Never install Python packages globally with <code>pip install</code>. All code runs inside a container built from your project's <code>Dockerfile</code>.</td>
+        <td><strong>Run all computation through Slurm</strong></td>
+        <td>Training, preprocessing, evaluation, notebooks, and package installation run as Slurm jobs, never on the login node. See <a href={`${base}docs/slurm`}>Running Jobs</a>.</td>
       </tr>
       <tr>
-        <td><strong>Book resources before using them</strong></td>
-        <td>Reserve CPU cores and GPUs via the shared booking spreadsheet before starting any experiment. See <a href="#booking">Resource Booking</a> below.</td>
+        <td><strong>Request only what you need</strong></td>
+        <td>Ask Slurm for the CPUs, memory, GPUs, and time your job actually uses. Over-requesting makes your job wait longer and blocks resources for everyone else.</td>
       </tr>
       <tr>
-        <td><strong>Respect storage limits</strong></td>
-        <td>Your home directory is capped at <strong>20 GB</strong>. Most of your files should go in <code>~/storage/</code>.</td>
+        <td><strong>Keep environments reproducible</strong></td>
+        <td>Use Conda environments and keep an exported <code>environment.yml</code> in your repository. See <a href={`${base}docs/environments`}>Software &amp; Conda</a>.</td>
       </tr>
       <tr>
         <td><strong>Version your code on Git</strong></td>
@@ -205,23 +230,56 @@ ssh lastname@<server ip>`}
       <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
     </svg>
     <div class="text-sm leading-relaxed">
-      If you are ever unsure whether something is allowed, ask your co-supervisor.
+      If you are ever unsure whether something is allowed, ask your co-supervisor or ask on Discord.
       The shared infrastructure depends on mutual respect.
     </div>
   </div>
 
-  <!-- ── Resource Booking ────────────────────────────────────────────────────── -->
-  <h2 id="booking">Resource Booking</h2>
+  <!-- ── Getting Help ──────────────────────────────────────────────────────── -->
+  <h2 id="help">Getting Help</h2>
 
   <p>
-    All CPU cores and GPUs must be reserved before use. Each server has its own
-    booking spreadsheet — ask your co-supervisor for the links. When booking:
+    For account, login, storage, Slurm, GPU, Conda, or job issues, ask in the
+    <strong>👨🏻‍🏭servers-administration</strong> channel on the AIRLab Discord server. Include the following
+    so the issue can be diagnosed quickly:
   </p>
 
   <ul>
-    <li>Reserve only what your experiment actually needs. Booking 8 GPUs for a single-GPU job wastes shared resources.</li>
-    <li>Set a realistic end time. If your job finishes early, release the reservation immediately.</li>
-    <li>Never book more than <strong>three days</strong> in advance — implement proper checkpointing instead so jobs can be paused and resumed.</li>
+    <li>your username;</li>
+    <li>the job ID;</li>
+    <li>the Slurm script or command you ran;</li>
+    <li>the relevant output and error log;</li>
+    <li>what you expected, and what happened instead.</li>
+  </ul>
+
+  <div class="callout callout-danger">
+    <svg class="w-5 h-5 flex-shrink-0 mt-0.5 text-red-500" fill="none" stroke="currentColor"
+         stroke-width="2" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="10"/>
+      <line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
+    </svg>
+    <div class="text-sm leading-relaxed">
+      Never post passwords, private SSH keys, tokens, or confidential data on Discord.
+    </div>
+  </div>
+
+  <!-- ── Ready Checklist ───────────────────────────────────────────────────── -->
+  <h2 id="ready">Before Your First Real Run</h2>
+
+  <p>
+    Make sure you can tick every box before you submit your first real experiment:
+  </p>
+
+  <ul class="!list-none !ml-0">
+    <li>☐ I can log in with <code>ssh USERNAME@10.75.4.86</code>.</li>
+    <li>☐ I changed my temporary password.</li>
+    <li>☐ I know that <code>~</code> is <code>/megaverse/storage/USERNAME</code>.</li>
+    <li>☐ I know where <code>~/dataset/shared</code> and <code>~/dataset/private</code> are.</li>
+    <li>☐ I have checked my allowed Slurm QoS assignments (<a href={`${base}docs/slurm#partitions`}>how</a>).</li>
+    <li>☐ I have run a short interactive or batch test on the <code>debug</code> partition.</li>
+    <li>☐ I request CPUs, RAM, runtime, and GPUs explicitly.</li>
+    <li>☐ I use Slurm for all compute-intensive work.</li>
+    <li>☐ I know how to use <code>squeue --me</code> and <code>scancel JOBID</code>.</li>
   </ul>
 
 </DocsLayout>

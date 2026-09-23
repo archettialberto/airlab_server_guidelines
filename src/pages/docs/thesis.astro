@@ -9,18 +9,6 @@ const toc = [
   { label: 'Writing Style',            id: 'style' },
   { label: 'Figures & Bibliography',   id: 'figures' },
 ];
-
-const latexBibCode = [
-  '% In your preamble',
-  '\\usepackage[style=ieee,backend=biber]{biblatex}',
-  '\\addbibresource{references.bib}',
-  '',
-  '% In your text',
-  'As shown by~\\cite{He2016ResNets}, deep residual learning...',
-  '',
-  '% At the end of the document',
-  '\\printbibliography',
-].join('\n');
 ---
 
 <DocsLayout title="Writing Your Thesis" toc={toc}>
@@ -91,7 +79,7 @@ const latexBibCode = [
   </table>
 
   <div class="callout callout-info">
-    <svg class="w-5 h-5 flex-shrink-0 mt-0.5 text-blue-500" fill="none" stroke="currentColor"
+    <svg class="w-5 h-5 flex-shrink-0 mt-0.5 text-accent-500" fill="none" stroke="currentColor"
          stroke-width="2" viewBox="0 0 24 24">
       <circle cx="12" cy="12" r="10"/>
       <line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>

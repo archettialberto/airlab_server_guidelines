@@ -20,6 +20,7 @@ export const NAV = [
       { label: 'Welcome & Onboarding',  href: '/docs/welcome' },
       { label: 'Shell & Remote Access', href: '/docs/shell' },
       { label: 'Running Jobs (Slurm)',  href: '/docs/slurm' },
+      { label: 'Scheduling Policy',     href: '/docs/scheduling' },
       { label: 'Software & Conda',      href: '/docs/environments' },
     ],
   },

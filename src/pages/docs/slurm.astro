@@ -5,15 +5,48 @@ import CodeBlock from '../../components/CodeBlock.astro';
 const base = import.meta.env.BASE_URL;
 
 const toc = [
-  { label: 'Slurm Concepts',        id: 'concepts' },
-  { label: 'Partitions & QoS',      id: 'partitions' },
-  { label: 'Essential Commands',    id: 'commands' },
+  { label: 'Slurm in a Nutshell',   id: 'concepts' },
+  { label: 'Choosing a Queue',      id: 'queues' },
   { label: 'Interactive Jobs',      id: 'interactive' },
   { label: 'Batch Jobs',            id: 'batch' },
-  { label: 'CPU Jobs',              id: 'cpu' },
   { label: 'GPU Jobs',              id: 'gpu' },
-  { label: 'Recommended Workflow',  id: 'workflow' },
+  { label: 'Long Jobs on bulk',     id: 'bulk' },
+  { label: 'Job Notifications',     id: 'notifications' },
+  { label: 'Essential Commands',    id: 'commands' },
   { label: 'Troubleshooting',       id: 'troubleshooting' },
+];
+
+// Decision flow: first matching row wins
+const flow = [
+  { icon: '🧪', q: 'Testing, debugging, or a short interactive session?', p: 'debug' },
+  { icon: '🖥️', q: 'No GPU needed (preprocessing, analysis, Conda)?',   p: 'cpu' },
+  { icon: '🐢', q: 'Long or not urgent, and able to resume from a checkpoint?', p: 'bulk' },
+  { icon: '🚀', q: 'Everything else: standard training and evaluation runs', p: 'normal' },
+];
+
+// Queue cards. prio = scheduling tier (4 = considered first)
+const queues = [
+  { name: 'debug',  icon: '🧪', use: 'Tests & debugging',          prio: 4, time: '2 h PhD · 1 h MSc/Ext', gpus: '1',                    cost: 'low',  interactive: true,  preempt: false },
+  { name: 'normal', icon: '🚀', use: 'Standard production',        prio: 3, time: '24 h',                  gpus: 'PhD 3 · MSc 1 · Ext 3', cost: 'high', interactive: false, preempt: false },
+  { name: 'cpu',    icon: '🖥️', use: 'CPU-only work',              prio: 2, time: '5 d PhD · 24 h MSc/Ext', gpus: 'none',                cost: 'CPU only', interactive: true,  preempt: false },
+  { name: 'bulk',   icon: '🐢', use: 'Long, restartable jobs',     prio: 1, time: '5 days',                gpus: '8',                     cost: 'low',  interactive: false, preempt: true  },
+];
+
+// Fair-share cost per GPU-hour (generic + type billing weight), normal vs debug/bulk
+const gpuCost = [
+  { gpu: 'L4',                    normal: 25, low: 20 },
+  { gpu: 'Quadro RTX 6000',       normal: 25, low: 20 },
+  { gpu: 'RTX A6000',             normal: 35, low: 28 },
+  { gpu: 'RTX PRO 6000 Blackwell', normal: 60, low: 48 },
+];
+
+const rules = [
+  { icon: '⏱️', t: 'Realistic run time',   d: 'Short jobs slip into free gaps (backfilling) and start sooner.' },
+  { icon: '📏', t: 'Only what you use',  d: 'Allocated CPUs and GPUs count against your fair-share, even when idle.' },
+  { icon: '🎯', t: 'Smallest GPU that fits', d: 'A PRO 6000 costs 2.4× the fair-share of an L4.' },
+  { icon: '⚖️', t: 'Per GPU, at most',   d: '16 CPUs and 48 GB of RAM.' },
+  { icon: '💾', t: 'Checkpoint bulk jobs', d: 'They can be preempted and restart from the beginning.' },
+  { icon: '🔄', t: 'Usage fades',        d: 'Recorded usage halves every 7 days.' },
 ];
 ---
 
@@ -22,155 +55,151 @@ const toc = [
   <h1>Running Jobs (Slurm)</h1>
 
   <p>
-    On polimi-cluster, every workload runs as a <strong>Slurm job</strong>. You describe the
-    resources you need, Slurm queues the request, and when those resources are free it starts your
-    job on a suitable compute node. This page takes you from your first test job to a full GPU
-    training run.
+    Every workload on polimi-cluster runs as a <strong>Slurm job</strong>: you declare the resources
+    you need, Slurm queues the request and starts the job on a compute node when they are free.
   </p>
 
   <!-- ── Concepts ──────────────────────────────────────────────────────────── -->
-  <h2 id="concepts">Slurm Concepts</h2>
-
-  <p>
-    Before your program starts, Slurm needs to know which resources it may use:
-  </p>
+  <h2 id="concepts">Slurm in a Nutshell</h2>
 
   <table>
     <thead>
-      <tr><th>Term</th><th>Meaning</th><th>Option</th></tr>
+      <tr><th>You declare</th><th>Option</th><th>Note</th></tr>
     </thead>
     <tbody>
-      <tr><td><strong>Partition</strong></td><td>The queue in which the job waits and runs</td><td class="whitespace-nowrap"><code>--partition=normal</code></td></tr>
-      <tr><td><strong>Time</strong></td><td>Maximum runtime (wall time). The job is stopped when it runs out</td><td class="whitespace-nowrap"><code>--time=04:00:00</code></td></tr>
-      <tr><td><strong>CPUs</strong></td><td>Number of CPU cores requested</td><td class="whitespace-nowrap"><code>--cpus-per-task=8</code></td></tr>
-      <tr><td><strong>Memory</strong></td><td>RAM requested for the job</td><td class="whitespace-nowrap"><code>--mem=32G</code></td></tr>
-      <tr><td><strong>GPUs</strong></td><td>Number of GPUs requested, if any</td><td class="whitespace-nowrap"><code>--gres=gpu:1</code></td></tr>
-      <tr><td><strong>Job ID</strong></td><td>Unique identifier returned after submission</td><td>—</td></tr>
+      <tr><td><strong>Queue</strong> (partition)</td><td class="whitespace-nowrap"><code>--partition=normal</code></td><td>See <a href="#queues">Choosing a Queue</a></td></tr>
+      <tr><td><strong>Max runtime</strong></td><td class="whitespace-nowrap"><code>--time=04:00:00</code></td><td>The job is stopped when it runs out</td></tr>
+      <tr><td><strong>CPUs</strong></td><td class="whitespace-nowrap"><code>--cpus-per-task=8</code></td><td></td></tr>
+      <tr><td><strong>Memory</strong></td><td class="whitespace-nowrap"><code>--mem=32G</code></td><td>Exceed it and the job is killed</td></tr>
+      <tr><td><strong>GPUs</strong></td><td class="whitespace-nowrap"><code>--gres=gpu:1</code></td><td>See <a href="#gpu">GPU Jobs</a></td></tr>
     </tbody>
   </table>
 
-  <div class="callout callout-warning">
-    <svg class="w-5 h-5 flex-shrink-0 mt-0.5 text-yellow-500" fill="none" stroke="currentColor"
+  <!-- ── Queues ────────────────────────────────────────────────────────────── -->
+  <h2 id="queues">Choosing a Queue</h2>
+
+  <h3>First match wins</h3>
+
+  <div class="not-prose my-5 space-y-2">
+    {flow.map((f, i) => (
+      <div class="flex items-center gap-3 rounded-lg border border-gray-200 px-4 py-3">
+        <span class="text-xl w-7 text-center flex-shrink-0" aria-hidden="true">{f.icon}</span>
+        <span class="flex-1 text-sm text-gray-700">{f.q}</span>
+        <span class="text-gray-300 flex-shrink-0" aria-hidden="true">→</span>
+        <code class="flex-shrink-0 w-16 text-center text-sm font-mono font-bold rounded px-2 py-1 bg-accent-800 text-white">{f.p}</code>
+      </div>
+    ))}
+  </div>
+
+  <h3>The four queues at a glance</h3>
+
+  <div class="not-prose my-5 grid sm:grid-cols-2 gap-4">
+    {queues.map((q) => (
+      <div class="rounded-xl border border-gray-200 overflow-hidden">
+        <div class="flex items-center gap-2 px-4 py-2.5 bg-accent-50 border-b border-gray-200">
+          <span class="text-lg" aria-hidden="true">{q.icon}</span>
+          <code class="font-mono font-bold text-accent-800">{q.name}</code>
+          <span class="ml-auto text-xs text-gray-500">{q.use}</span>
+        </div>
+        <div class="grid grid-cols-[auto,1fr] gap-x-4 gap-y-1.5 px-4 py-3 text-sm text-gray-700">
+          <span class="text-gray-400">Priority</span>
+          <span class="flex items-center gap-1" aria-label={`${q.prio} of 4`}>
+            {[1, 2, 3, 4].map((n) => (
+              <span class:list={['inline-block w-4 h-2 rounded-sm', n <= q.prio ? 'bg-accent-800' : 'bg-gray-200']}></span>
+            ))}
+          </span>
+          <span class="text-gray-400">Max time</span><span>{q.time}</span>
+          <span class="text-gray-400">GPUs at once</span><span>{q.gpus}</span>
+          <span class="text-gray-400">Fair-share cost</span>
+          <span>{q.cost === 'high' ? '▲ higher' : q.cost === 'low' ? '▼ lower' : q.cost}</span>
+          <span class="text-gray-400">Interactive</span><span>{q.interactive ? '✓' : '✗ batch only'}</span>
+          <span class="text-gray-400">Preemptible</span>
+          <span>{q.preempt ? <strong class="text-yellow-700">⚠ yes, checkpoint!</strong> : 'no'}</span>
+        </div>
+      </div>
+    ))}
+  </div>
+
+  <div class="callout callout-success">
+    <svg class="w-5 h-5 flex-shrink-0 mt-0.5 text-green-500" fill="none" stroke="currentColor"
          stroke-width="2" viewBox="0 0 24 24">
-      <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-      <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+      <polyline points="22 4 12 14.01 9 11.01"/>
     </svg>
     <div class="text-sm leading-relaxed">
-      <strong>Request only what you need.</strong> Over-requesting memory, GPUs, or wall time makes your
-      job wait longer and keeps resources idle for everyone else. Under-requesting is not safe either:
-      if your job exceeds its memory allocation, Slurm can kill it. If it exceeds its time limit, it is stopped.
-      Save checkpoints regularly so a stopped job can be resumed.
+      <strong>Use <code>debug</code> for tests.</strong> It has the highest priority and costs less
+      fair-share than <code>normal</code>.
     </div>
   </div>
 
-  <!-- ── Partitions & QoS ─────────────────────────────────────────────────── -->
-  <h2 id="partitions">Partitions & QoS</h2>
+  <h3>How your priority works</h3>
 
-  <p>
-    The cluster has four standard partitions:
-  </p>
-
-  <table>
-    <thead>
-      <tr><th>Partition</th><th>Intended use</th><th>Maximum runtime</th></tr>
-    </thead>
-    <tbody>
-      <tr><td><code>debug</code></td><td>Short tests and troubleshooting</td><td>2 hours</td></tr>
-      <tr><td><code>normal</code></td><td>Regular jobs</td><td>24 hours</td></tr>
-      <tr><td><code>bulk</code></td><td>Longer, lower-priority jobs</td><td>5 days</td></tr>
-      <tr><td><code>cpu</code></td><td>CPU-only jobs</td><td>5 days</td></tr>
-    </tbody>
-  </table>
-
-  <p>
-    Your account has one or more <strong>QoS</strong> (Quality of Service) assignments. They determine
-    which partitions you may use and influence your jobs' priority. Use a partition only if it is
-    available through your QoS. Check your assignments with:
-  </p>
-
-  <CodeBlock
-    lang="bash"
-    filename="polimi-cluster"
-    code={`sacctmgr show user "$USER" withassoc format=User,Account,QOS`}
-  />
-
-  <!-- ── Essential Commands ───────────────────────────────────────────────── -->
-  <h2 id="commands">Essential Commands</h2>
-
-  <table>
-    <thead>
-      <tr><th>Command</th><th>What it does</th></tr>
-    </thead>
-    <tbody>
-      <tr><td><code>sinfo</code></td><td>Show nodes and partitions, and their current state</td></tr>
-      <tr><td><code>squeue --me</code></td><td>Show only your queued and running jobs</td></tr>
-      <tr><td><code>sbatch script.sbatch</code></td><td>Submit a batch job</td></tr>
-      <tr><td><code>srun ... --pty bash</code></td><td>Start an interactive shell on a compute node</td></tr>
-      <tr><td><code>scontrol show job JOBID</code></td><td>Show the full details of a job</td></tr>
-      <tr><td><code>scancel JOBID</code></td><td>Cancel a queued or running job</td></tr>
-      <tr><td><code>sacct -j JOBID</code></td><td>Review a completed or failed job</td></tr>
-    </tbody>
-  </table>
-
-  <p>
-    After a job ends, <code>sacct</code> shows how much of the requested resources it actually used.
-    Use it to fine-tune your next requests:
-  </p>
-
-  <CodeBlock
-    lang="bash"
-    filename="polimi-cluster"
-    code={`sacct -j JOBID --format=JobID,JobName,State,Elapsed,AllocCPUS,ReqMem,ExitCode`}
-  />
-
-  <!-- ── Interactive ──────────────────────────────────────────────────────── -->
-  <h2 id="interactive">Your First Interactive Job</h2>
-
-  <p>
-    An interactive allocation gives you a shell on a compute node. It is useful for testing
-    commands and debugging. Request a small allocation on the <code>debug</code> partition:
-  </p>
-
-  <CodeBlock
-    lang="bash"
-    filename="polimi-cluster"
-    code={`srun --partition=debug --time=00:10:00 --cpus-per-task=1 --mem=2G --pty bash`}
-  />
-
-  <p>
-    Once Slurm starts the shell, you are on a compute node. Check it:
-  </p>
-
-  <CodeBlock
-    lang="bash"
-    filename="compute node"
-    code={`hostname    # which node you landed on
-nproc       # CPUs available to you
-free -h     # memory
-
-exit        # end the allocation when finished`}
-  />
-
-  <div class="callout callout-info">
-    <svg class="w-5 h-5 flex-shrink-0 mt-0.5 text-accent-500" fill="none" stroke="currentColor"
-         stroke-width="2" viewBox="0 0 24 24">
-      <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/>
-      <line x1="12" y1="16" x2="12.01" y2="16"/>
-    </svg>
-    <p class="text-sm leading-relaxed">
-      An interactive session ends if your SSH connection drops. Start it inside
-      <a href={`${base}docs/shell#tmux`}>tmux</a> if you need it to survive disconnections, and always
-      <code>exit</code> as soon as you are done: an idle allocation still blocks its resources.
-    </p>
+  <div class="not-prose my-5 flex flex-col sm:flex-row sm:items-center gap-2 text-sm">
+    {['🧾 Resources × time × queue', '📈 Usage ↑', '⚖️ Fair-share ↓', '⏳ Next jobs wait longer'].map((step, i) => (
+      <>
+        {i > 0 && (
+          <span class="text-gray-300 text-center" aria-hidden="true">
+            <span class="sm:hidden">↓</span><span class="hidden sm:inline">→</span>
+          </span>
+        )}
+        <span class="rounded-lg border border-gray-200 px-3 py-2 whitespace-nowrap">{step}</span>
+      </>
+    ))}
   </div>
 
-  <!-- ── Batch ────────────────────────────────────────────────────────────── -->
-  <h2 id="batch">Your First Batch Job</h2>
+  <ul>
+    <li>Slurm considers queues in order: <code>debug</code> ▸ <code>normal</code> ▸ <code>cpu</code> ▸ <code>bulk</code>.</li>
+    <li>Within a queue, jobs are ranked by a <strong>score</strong>: your account type, your <strong>fair-share</strong>, and how long the job has waited.</li>
+    <li>Fair-share drops as you use the cluster and recovers over time. Usage is accounting only, not money.</li>
+  </ul>
+
+  <h3>Rules of thumb</h3>
+
+  <div class="not-prose my-5 grid sm:grid-cols-2 gap-3">
+    {rules.map((r) => (
+      <div class="flex gap-3 rounded-lg border border-gray-200 px-4 py-3">
+        <span class="text-xl flex-shrink-0" aria-hidden="true">{r.icon}</span>
+        <div class="text-sm">
+          <div class="font-semibold text-gray-900">{r.t}</div>
+          <div class="text-gray-600">{r.d}</div>
+        </div>
+      </div>
+    ))}
+  </div>
 
   <p>
-    Batch jobs are how real work runs on the cluster. You write a script whose
-    <code>#SBATCH</code> lines declare the resources, submit it, and Slurm runs it unattended.
-    The job keeps running even if you log out. Create a file named <code>hello.sbatch</code>:
+    Exact formulas, weights, and per-account limits are in
+    <a href={`${base}docs/scheduling`}>Scheduling Policy</a>.
+  </p>
+
+  <!-- ── Interactive ──────────────────────────────────────────────────────── -->
+  <h2 id="interactive">Interactive Jobs</h2>
+
+  <p>
+    An interactive allocation gives you a shell on a compute node, for testing and debugging.
+    It is allowed on <code>debug</code> and <code>cpu</code> only.
+  </p>
+
+  <CodeBlock
+    lang="bash"
+    filename="polimi-cluster"
+    code={`srun --partition=debug --time=00:10:00 --cpus-per-task=1 --mem=2G --pty bash
+
+hostname; nproc; free -h    # you are now on a compute node
+exit                        # release the allocation as soon as you are done`}
+  />
+
+  <p>
+    The session dies if your SSH connection drops: run it inside <a href={`${base}docs/shell#tmux`}>tmux</a>
+    if needed. An idle allocation still blocks its resources.
+  </p>
+
+  <!-- ── Batch ────────────────────────────────────────────────────────────── -->
+  <h2 id="batch">Batch Jobs</h2>
+
+  <p>
+    Real work runs as batch jobs: a script whose <code>#SBATCH</code> lines declare the resources.
+    It keeps running after you log out.
   </p>
 
   <CodeBlock
@@ -182,84 +211,32 @@ exit        # end the allocation when finished`}
 #SBATCH --time=00:05:00
 #SBATCH --cpus-per-task=1
 #SBATCH --mem=1G
-#SBATCH --output=hello-%j.out
+#SBATCH --output=hello-%j.out    # %j = job ID
+#SBATCH --error=hello-%j.err
 
 hostname
 date`}
   />
 
-  <p>
-    Submit it and check its status:
-  </p>
-
   <CodeBlock
     lang="bash"
     filename="polimi-cluster"
     code={`sbatch hello.sbatch     # prints: Submitted batch job JOBID
-squeue --me             # shows the job while it is pending or running`}
+squeue --me             # check its status
+cat hello-JOBID.out     # read the output when it is done`}
   />
 
   <p>
-    After it finishes, read the output. <code>%j</code> in the <code>--output</code> filename is
-    replaced by the job ID:
-  </p>
-
-  <CodeBlock
-    lang="bash"
-    filename="polimi-cluster"
-    code={`cat hello-JOBID.out`}
-  />
-
-  <!-- ── CPU ──────────────────────────────────────────────────────────────── -->
-  <h2 id="cpu">CPU Jobs</h2>
-
-  <p>
-    Use the <code>cpu</code> partition for CPU-only workloads (data preprocessing, analysis,
-    environment creation) when it is available to your account. Writing standard output and errors to
-    separate files makes failures easier to find:
-  </p>
-
-  <CodeBlock
-    lang="bash"
-    filename="cpu-analysis.sbatch"
-    code={`#!/bin/bash
-#SBATCH --job-name=cpu-analysis
-#SBATCH --partition=cpu
-#SBATCH --time=04:00:00
-#SBATCH --cpus-per-task=8
-#SBATCH --mem=32G
-#SBATCH --output=cpu-analysis-%j.out
-#SBATCH --error=cpu-analysis-%j.err
-
-python analysis.py`}
-  />
-
-  <p>
-    Start small, measure actual usage with <code>sacct</code>, then adjust future requests.
+    For CPU-only work, use <code>--partition=cpu</code> and no <code>--gres</code>. Start small,
+    check the actual usage with <code>sacct</code>, then adjust.
   </p>
 
   <!-- ── GPU ──────────────────────────────────────────────────────────────── -->
   <h2 id="gpu">GPU Jobs</h2>
 
   <p>
-    Always request GPUs through Slurm with <code>--gres=gpu:N</code>. Slurm assigns specific GPUs to
-    your job and makes only those visible to it.
-  </p>
-
-  <div class="callout callout-danger">
-    <svg class="w-5 h-5 flex-shrink-0 mt-0.5 text-red-500" fill="none" stroke="currentColor"
-         stroke-width="2" viewBox="0 0 24 24">
-      <circle cx="12" cy="12" r="10"/>
-      <line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
-    </svg>
-    <div class="text-sm leading-relaxed">
-      Do not choose a GPU manually and do not set <code>CUDA_VISIBLE_DEVICES</code> yourself.
-      Slurm handles GPU assignment.
-    </div>
-  </div>
-
-  <p>
-    A one-GPU training job looks like this:
+    Request GPUs with <code>--gres=gpu:N</code>: Slurm assigns them and makes only those visible to
+    your job. Never set <code>CUDA_VISIBLE_DEVICES</code> yourself.
   </p>
 
   <CodeBlock
@@ -268,7 +245,7 @@ python analysis.py`}
     code={`#!/bin/bash
 #SBATCH --job-name=gpu-train
 #SBATCH --partition=normal
-#SBATCH --time=01:00:00
+#SBATCH --time=08:00:00
 #SBATCH --cpus-per-task=4
 #SBATCH --mem=16G
 #SBATCH --gres=gpu:1
@@ -276,41 +253,105 @@ python analysis.py`}
 #SBATCH --error=gpu-train-%j.err
 
 module load miniconda/25.5.1
-conda activate my-project
+conda activate my-project      # see Software & Conda
 
-nvidia-smi          # logs which GPU the job received
+nvidia-smi                     # logs which GPU the job received
 python train.py`}
   />
 
   <p>
-    The <code>module load</code> and <code>conda activate</code> lines load your Python environment.
-    See <a href={`${base}docs/environments`}>Software &amp; Conda</a> for how to create it.
-    If your code needs more than one GPU, request the exact number:
+    To ask for a specific GPU model, add its type: <code>--gres=gpu:TYPE:1</code>. List the
+    available types with:
   </p>
 
   <CodeBlock
     lang="bash"
-    code={`#SBATCH --gres=gpu:2`}
+    filename="polimi-cluster"
+    code={`sinfo -o "%15N %G"     # node name and its GPU types, e.g. gpu:quadro_rtx_6000:8`}
   />
 
   <p>
-    Check that your framework actually uses the requested GPU count before running a long
-    experiment. For example, <code>torch.cuda.device_count()</code> should match <code>N</code>.
+    With several GPUs (<code>--gres=gpu:2</code>), check that your code really uses them all,
+    e.g. <code>torch.cuda.device_count()</code>.
   </p>
 
-  <!-- ── Workflow ─────────────────────────────────────────────────────────── -->
-  <h2 id="workflow">Recommended Workflow</h2>
+  <!-- ── Bulk ─────────────────────────────────────────────────────────────── -->
+  <h2 id="bulk">Long Jobs on bulk</h2>
 
-  <ol class="steps">
-    <li><span>Log in to the login node.</span></li>
-    <li><span>Put code in your home directory and data in your dataset directories.</span></li>
-    <li><span>Create or update a reproducible <a href={`${base}docs/environments`}>Conda environment</a> through Slurm.</span></li>
-    <li><span>Test the code with a short job on the <code>debug</code> partition.</span></li>
-    <li><span>Check the logs and confirm the requested resources are adequate.</span></li>
-    <li><span>Submit the actual job to the appropriate allowed partition.</span></li>
-    <li><span>Monitor it with <code>squeue --me</code>.</span></li>
-    <li><span>Inspect completed jobs with <code>sacct</code> and keep the output logs.</span></li>
-  </ol>
+  <p>
+    A <code>bulk</code> job can be <strong>preempted</strong> by <code>debug</code> or
+    <code>normal</code> jobs: it is stopped, put back in the queue, and later restarted
+    <strong>from the beginning of the script</strong>. Your code must save checkpoints and resume from the latest one.
+  </p>
+
+  <CodeBlock
+    lang="bash"
+    filename="long-train.sbatch"
+    code={`#!/bin/bash
+#SBATCH --job-name=long-train
+#SBATCH --partition=bulk
+#SBATCH --time=3-00:00:00         # 3 days
+#SBATCH --cpus-per-task=8
+#SBATCH --mem=32G
+#SBATCH --gres=gpu:1
+#SBATCH --output=long-train-%j.out
+
+module load miniconda/25.5.1
+conda activate my-project
+
+# train.py must load checkpoints/last.pt when it exists
+python train.py --resume checkpoints/last.pt`}
+  />
+
+  <!-- ── Notifications ────────────────────────────────────────────────────── -->
+  <h2 id="notifications">Job Notifications</h2>
+
+  <p>
+    Get a Discord direct message when your job ends or fails:
+  </p>
+
+  <CodeBlock
+    lang="bash"
+    code={`#SBATCH --mail-user=discord           # or your email address
+#SBATCH --mail-type=END,FAIL`}
+  />
+
+  <table>
+    <thead>
+      <tr><th><code>--mail-type</code></th><th>You are notified when…</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>BEGIN</code> / <code>END</code> / <code>FAIL</code></td><td>the job starts / finishes / fails</td></tr>
+      <tr><td><code>REQUEUE</code></td><td>the job is requeued (e.g., after preemption on <code>bulk</code>)</td></tr>
+      <tr><td><code>TIME_LIMIT_80</code></td><td>the job reaches 80% of its time limit (also <code>_50</code>, <code>_90</code>)</td></tr>
+      <tr><td><code>ALL</code></td><td>all of the above events</td></tr>
+    </tbody>
+  </table>
+
+  <!-- ── Commands ─────────────────────────────────────────────────────────── -->
+  <h2 id="commands">Essential Commands</h2>
+
+  <table>
+    <thead>
+      <tr><th>Command</th><th>What it does</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>sinfo</code></td><td>Nodes and queues, and their state</td></tr>
+      <tr><td><code>squeue --me</code></td><td>Your queued and running jobs</td></tr>
+      <tr><td><code>sbatch script.sbatch</code></td><td>Submit a batch job</td></tr>
+      <tr><td><code>scancel JOBID</code></td><td>Cancel a job</td></tr>
+      <tr><td><code>scontrol show job JOBID</code></td><td>Full details of a job</td></tr>
+      <tr><td><code>sacct -j JOBID</code></td><td>Review a finished job</td></tr>
+      <tr><td><code>sprio -l -u $USER</code></td><td>Why your pending jobs have their priority</td></tr>
+    </tbody>
+  </table>
+
+  <CodeBlock
+    lang="bash"
+    filename="polimi-cluster"
+    code={`# How much of the requested resources a finished job actually used
+sacct -j JOBID --format=JobID,JobName,State,Elapsed,AllocCPUS,ReqMem,ExitCode`}
+  />
 
   <!-- ── Troubleshooting ──────────────────────────────────────────────────── -->
   <h2 id="troubleshooting">Troubleshooting</h2>
@@ -320,36 +361,18 @@ python train.py`}
       <tr><th>Problem</th><th>First checks</th></tr>
     </thead>
     <tbody>
-      <tr>
-        <td>Job is pending</td>
-        <td>Run <code>squeue --me</code> and inspect the reason column (<code>NODELIST(REASON)</code>). Check the requested resources and partition.</td>
-      </tr>
-      <tr>
-        <td>Job disappeared or failed</td>
-        <td>Read the <code>*.err</code> and <code>*.out</code> files. Run <code>sacct -j JOBID</code>.</td>
-      </tr>
-      <tr>
-        <td>Out-of-memory failure</td>
-        <td>Request more memory, or reduce the program's memory use.</td>
-      </tr>
-      <tr>
-        <td>GPU program does not see a GPU</td>
-        <td>Confirm the script contains <code>#SBATCH --gres=gpu:N</code> and run <code>nvidia-smi</code> inside the allocation.</td>
-      </tr>
-      <tr>
-        <td>Command works on the login node but not in a job</td>
-        <td>Load the same modules and activate the same Conda environment in the Slurm script.</td>
-      </tr>
-      <tr>
-        <td>Cannot connect through VPN</td>
-        <td>Use <code>10.75.4.86</code> instead of the hostname.</td>
-      </tr>
+      <tr><td>Job is pending</td><td><code>squeue --me</code>: read the <code>REASON</code> column. Check queue, limits, and requested resources.</td></tr>
+      <tr><td>Job disappeared or failed</td><td>Read the <code>*.err</code> / <code>*.out</code> files and run <code>sacct -j JOBID</code>.</td></tr>
+      <tr><td>Out of memory</td><td>Request more <code>--mem</code>, or reduce the program's memory use.</td></tr>
+      <tr><td><code>bulk</code> job started over</td><td>It was preempted: resume from a checkpoint (<a href="#bulk">see above</a>).</td></tr>
+      <tr><td>No GPU visible</td><td>Check <code>#SBATCH --gres=gpu:N</code> and run <code>nvidia-smi</code> inside the job.</td></tr>
+      <tr><td>Works on the login node, not in a job</td><td>Load the same modules and Conda environment in the script.</td></tr>
+      <tr><td>Cannot connect through VPN</td><td>Use <code>10.75.4.86</code> instead of the hostname.</td></tr>
     </tbody>
   </table>
 
   <p>
-    Still stuck? Ask on Discord, following the instructions in
-    <a href={`${base}docs/welcome#help`}>Getting Help</a>.
+    Still stuck? See <a href={`${base}docs/welcome#help`}>Getting Help</a>.
   </p>
 
 </DocsLayout>

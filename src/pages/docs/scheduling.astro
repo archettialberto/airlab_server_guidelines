@@ -1,0 +1,254 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+import CodeBlock from '../../components/CodeBlock.astro';
+
+const base = import.meta.env.BASE_URL;
+
+const toc = [
+  { label: 'Scheduling Order',   id: 'order' },
+  { label: 'Priority Score',     id: 'score' },
+  { label: 'Billing & Usage',    id: 'billing' },
+  { label: 'Fair-Share',         id: 'fairshare' },
+  { label: 'Worked Example',     id: 'example' },
+  { label: 'Limits',             id: 'limits' },
+  { label: 'Check Your Values',  id: 'check' },
+];
+---
+
+<DocsLayout title="Scheduling Policy" toc={toc}>
+
+  <h1>Scheduling Policy</h1>
+
+  <p>
+    This page details how Slurm orders jobs on polimi-cluster. For the practical summary
+    (which queue to use and when), see <a href={`${base}docs/slurm#queues`}>Choosing a Queue</a>.
+  </p>
+
+  <!-- ── Order ────────────────────────────────────────────────────────────── -->
+  <h2 id="order">Scheduling Order</h2>
+
+  <p>
+    A job can start only when resources are free and its limits allow it. Among eligible jobs, Slurm
+    first looks at the <strong>partition tier</strong>, then at the <strong>job score</strong> within
+    the same tier. The two are separate: a high-scoring <code>bulk</code> job does not outrank a
+    lower-scoring <code>normal</code> job.
+  </p>
+
+  <table>
+    <thead>
+      <tr><th>Partition</th><th>Tier</th><th>Preemptible</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>debug</code></td><td>300</td><td>no</td></tr>
+      <tr><td><code>normal</code></td><td>200</td><td>no</td></tr>
+      <tr><td><code>cpu</code></td><td>150</td><td>no</td></tr>
+      <tr><td><code>bulk</code></td><td>50</td><td>yes, by <code>debug</code> / <code>normal</code> jobs</td></tr>
+    </tbody>
+  </table>
+
+  <p>
+    <strong>Backfilling</strong> lets a lower-priority job start early if it fits in a free gap
+    without delaying higher-priority jobs, which is why a realistic <code>--time</code> pays off.
+    Preemption and reservations also affect start times.
+  </p>
+
+  <!-- ── Score ────────────────────────────────────────────────────────────── -->
+  <h2 id="score">Priority Score</h2>
+
+  <CodeBlock
+    lang="text"
+    filename="job score"
+    code={`score ≈ 100 000 × QoS / 3000                     QoS priority (table below)
+      +  10 000 × FairShare                       0…1, from your recent usage
+      +   5 000 × min(waiting time / 7 days, 1)   age of the pending job`}
+  />
+
+  <p>
+    The QoS is assigned automatically from your account type and the chosen partition.
+    Scores are integers, so values are approximate after rounding.
+  </p>
+
+  <table>
+    <thead>
+      <tr><th>QoS priority</th><th>PhD</th><th>MSc</th><th>External</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>debug</code></td><td>3000</td><td>2500</td><td>2000</td></tr>
+      <tr><td><code>normal</code></td><td>2000</td><td>1500</td><td>1000</td></tr>
+      <tr><td><code>cpu</code></td><td>1500</td><td>1000</td><td>750</td></tr>
+      <tr><td><code>bulk</code></td><td>1000</td><td>500</td><td>400</td></tr>
+    </tbody>
+  </table>
+
+  <!-- ── Billing ──────────────────────────────────────────────────────────── -->
+  <h2 id="billing">Billing & Usage</h2>
+
+  <p>
+    "Billing" is usage accounting for scheduling, not a monetary charge. Each running job has a
+    billing value computed from its allocated resources and partition:
+  </p>
+
+  <CodeBlock
+    lang="text"
+    filename="billing"
+    code={`billing = ⌊ Σ  allocated amount × weight ⌋        (per resource, per partition)
+usage   = billing × running hours                (billing-unit-hours)
+decay   = usage recorded d days ago keeps 2^(−d/7) of its weight`}
+  />
+
+  <table>
+    <thead>
+      <tr><th>Resource</th><th><code>debug</code> / <code>bulk</code></th><th><code>normal</code></th><th><code>cpu</code></th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Each CPU</td><td>0.32</td><td>0.32</td><td>0.32</td></tr>
+      <tr><td>Memory</td><td>0</td><td>0</td><td>0</td></tr>
+      <tr><td>Any GPU (generic)</td><td>16</td><td>20</td><td>not allowed</td></tr>
+      <tr><td>+ L4 / Quadro RTX 6000</td><td>4</td><td>5</td><td>not allowed</td></tr>
+      <tr><td>+ RTX A6000</td><td>12</td><td>15</td><td>not allowed</td></tr>
+      <tr><td>+ RTX PRO 6000</td><td>32</td><td>40</td><td>not allowed</td></tr>
+    </tbody>
+  </table>
+
+  <p>
+    A GPU is billed with both the generic and the type weight: a Quadro RTX 6000 in
+    <code>bulk</code> counts <code>16 + 4 = 20</code>. Usage halves after 7 days and is a quarter
+    after 14; it never resets all at once. It is recalculated every 5 minutes, including for
+    running jobs.
+  </p>
+
+  <!-- ── Fair-share ───────────────────────────────────────────────────────── -->
+  <h2 id="fairshare">Fair-Share</h2>
+
+  <p>
+    Fair-share uses Slurm's <strong>Fair Tree</strong> algorithm. Accounts have a relative target
+    share of the cluster, and users within an account have equal shares:
+  </p>
+
+  <table>
+    <thead>
+      <tr><th>Account</th><th>Relative share</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>PhD</td><td>100</td></tr>
+      <tr><td>MSc</td><td>50</td></tr>
+      <tr><td>External</td><td>20</td></tr>
+    </tbody>
+  </table>
+
+  <p>
+    Shares are targets, not reserved resources or GPU-hour allowances. At each level of the
+    account tree:
+  </p>
+
+  <CodeBlock
+    lang="text"
+    filename="fair tree"
+    code={`LevelFS   = (share / sum of sibling shares) ÷ (usage / sum of sibling usage)
+            > 1 → under-using,  < 1 → over-using
+FairShare = rank / N      users ranked by LevelFS, account first, then user (best rank = N)`}
+  />
+
+  <p>
+    Because FairShare depends on a <strong>rank</strong>, there is no fixed "points lost per GPU-hour":
+    extra usage lowers your priority only if it moves you down the ranking relative to other users.
+  </p>
+
+  <!-- ── Example ──────────────────────────────────────────────────────────── -->
+  <h2 id="example">Worked Example</h2>
+
+  <p>
+    A PhD user runs one Quadro RTX 6000 with 16 CPUs for 24 hours:
+  </p>
+
+  <table>
+    <thead>
+      <tr><th></th><th><code>normal</code></th><th><code>bulk</code></th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Tier</td><td>200</td><td>50</td></tr>
+      <tr><td>QoS score contribution</td><td>≈ 66 667</td><td>≈ 33 333</td></tr>
+      <tr><td>Preemptible</td><td>no</td><td>yes</td></tr>
+      <tr><td>Billing</td><td>⌊16 × 0.32 + 20 + 5⌋ = 30</td><td>⌊16 × 0.32 + 16 + 4⌋ = 25</td></tr>
+      <tr><td>Usage after 24 h (before decay)</td><td><strong>720</strong></td><td><strong>600</strong></td></tr>
+    </tbody>
+  </table>
+
+  <p>
+    Same hardware, same time, but <code>normal</code> records 20% more usage. In exchange it is
+    scheduled sooner and cannot be preempted. Switching partitions later does not erase that history.
+  </p>
+
+  <!-- ── Limits ───────────────────────────────────────────────────────────── -->
+  <h2 id="limits">Limits</h2>
+
+  <h3>Maximum runtime</h3>
+
+  <table>
+    <thead>
+      <tr><th>Partition</th><th>PhD</th><th>MSc / External</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>debug</code></td><td>2 hours</td><td>1 hour</td></tr>
+      <tr><td><code>normal</code></td><td>24 hours</td><td>24 hours</td></tr>
+      <tr><td><code>cpu</code></td><td>5 days</td><td>24 hours</td></tr>
+      <tr><td><code>bulk</code></td><td>5 days</td><td>5 days</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Per-user limits, per partition</h3>
+
+  <p>
+    Format: <strong>running jobs / running + pending jobs / GPUs in use</strong>. "–" means no limit;
+    available resources still apply.
+  </p>
+
+  <table>
+    <thead>
+      <tr><th>Partition</th><th>PhD</th><th>MSc</th><th>External</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>debug</code></td><td>1 / – / 1</td><td>1 / 5 / 1</td><td>1 / 5 / 1</td></tr>
+      <tr><td><code>normal</code></td><td>– / – / 3</td><td>1 / 10 / 1</td><td>1 / 20 / 3</td></tr>
+      <tr><td><code>cpu</code></td><td>– / – / no GPUs</td><td>4 / 30 / no GPUs</td><td>10 / 100 / no GPUs</td></tr>
+      <tr><td><code>bulk</code></td><td>– / – / 8</td><td>2 / 20 / 8</td><td>20 / 200 / 8</td></tr>
+    </tbody>
+  </table>
+
+  <p>
+    Limits apply separately in each partition: an MSc user can run two <code>bulk</code> jobs and,
+    at the same time, one <code>normal</code> job. Over the running limit, extra jobs wait; over the
+    submission limit, they are rejected.
+  </p>
+
+  <h3>Submission rules</h3>
+
+  <ul>
+    <li>At most <strong>16 CPUs and 48 GB of RAM per GPU</strong>.</li>
+    <li>Interactive jobs only on <code>debug</code> and <code>cpu</code>.</li>
+    <li>No GPUs on <code>cpu</code>.</li>
+  </ul>
+
+  <!-- ── Check ────────────────────────────────────────────────────────────── -->
+  <h2 id="check">Check Your Values</h2>
+
+  <CodeBlock
+    lang="bash"
+    filename="polimi-cluster"
+    code={`# Your account, shares, and allowed QoS
+sacctmgr -P show assoc where user="$USER" format=Account,User,Fairshare,DefaultQOS,QOS
+
+# Your current decayed usage and fair-share
+sshare -l -u "$USER"
+
+# Score components of your pending jobs
+sprio -l -u "$USER"
+
+# Your jobs of the last 7 days, with billing=... in AllocTRES
+sacct -X -u "$USER" -S now-7days -P --format=JobID,Partition,QOS,Elapsed,State,AllocTRES
+
+# Configured QoS limits
+sacctmgr -P show qos format=Name,MaxJobsPU,MaxSubmitPU,MaxTRESPU,MaxWall`}
+  />
+
+</DocsLayout>

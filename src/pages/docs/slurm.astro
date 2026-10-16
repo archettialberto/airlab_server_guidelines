@@ -13,6 +13,7 @@ const toc = [
   { label: 'Long Jobs on bulk',     id: 'bulk' },
   { label: 'Job Notifications',     id: 'notifications' },
   { label: 'Essential Commands',    id: 'commands' },
+  { label: 'Resource Monitoring',   id: 'monitoring' },
   { label: 'Troubleshooting',       id: 'troubleshooting' },
 ];
 
@@ -366,6 +367,22 @@ python train.py --resume checkpoints/last.pt`}
     code={`# How much of the requested resources a finished job actually used
 sacct -j JOBID --format=JobID,JobName,State,Elapsed,AllocCPUS,ReqMem,ExitCode`}
   />
+
+  <!-- ── Monitoring ───────────────────────────────────────────────────────── -->
+  <h2 id="monitoring">Resource Monitoring</h2>
+
+  <p>
+    The cluster's <strong>Grafana</strong> dashboards show live and historical usage of nodes, CPUs,
+    memory, and GPUs. Open
+    <a href="http://10.75.4.86:3000" target="_blank" rel="noopener"><code>http://10.75.4.86:3000</code></a>
+    in your browser (VPN or AIRLab network required) and log in with your <strong>cluster username and
+    password</strong>.
+  </p>
+
+  <p>
+    Use it to check whether your jobs actually use the GPUs and memory you requested,
+    and how busy the cluster is before you submit.
+  </p>
 
   <!-- ── Troubleshooting ──────────────────────────────────────────────────── -->
   <h2 id="troubleshooting">Troubleshooting</h2>

@@ -307,14 +307,28 @@ python train.py --resume checkpoints/last.pt`}
   <h2 id="notifications">Job Notifications</h2>
 
   <p>
-    Get a Discord direct message when your job ends or fails:
+    Slurm can notify you when your job ends or fails. Add two lines to your script, choosing
+    where the notification goes:
   </p>
 
   <CodeBlock
     lang="bash"
-    code={`#SBATCH --mail-user=discord           # or your email address
+    filename="Discord direct message"
+    code={`#SBATCH --mail-user=discord     # write "discord" literally
 #SBATCH --mail-type=END,FAIL`}
   />
+
+  <CodeBlock
+    lang="bash"
+    filename="Email"
+    code={`#SBATCH --mail-user=name.surname@polimi.it
+#SBATCH --mail-type=END,FAIL`}
+  />
+
+  <p>
+    With <code>discord</code>, you do not need to enter your Discord ID: the cluster already knows it
+    from your enrollment and sends the message to you.
+  </p>
 
   <table>
     <thead>

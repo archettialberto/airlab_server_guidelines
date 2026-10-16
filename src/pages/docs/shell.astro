@@ -20,8 +20,7 @@ const toc = [
   <h1>Shell & Remote Access</h1>
 
   <p>
-    The command line is your primary interface to polimi-cluster. This guide covers how to connect
-    to the login node comfortably and securely, move files around, and keep terminal sessions alive.
+    How to connect to the login node securely, move files, and keep terminal sessions alive.
     For running jobs, see <a href={`${base}docs/slurm`}>Running Jobs</a>.
   </p>
 
@@ -29,9 +28,8 @@ const toc = [
   <h2 id="ssh-keys">SSH Keys</h2>
 
   <p>
-    Password authentication is convenient but weaker than key-based authentication.
-    Set up an SSH key pair once and you will never type your password over the network again.
-    Run these commands on <strong>your own computer</strong>:
+    Set up an SSH key once and stop typing your password. Run these commands on
+    <strong>your own computer</strong>:
   </p>
 
   <OsCodeBlock
@@ -72,8 +70,7 @@ ssh USERNAME@10.75.4.86`}
   <h2 id="ssh">SSH Config & Alias</h2>
 
   <p>
-    Instead of typing the username and IP every time, add a host alias to your SSH config file
-    (create it if it does not exist). The IP address is used on purpose: it works even when the
+    Add a host alias to your SSH config file (create it if needed). The IP works even when the
     VPN does not resolve internal hostnames.
   </p>
 
@@ -124,9 +121,8 @@ Host polimi-cluster pc
   <h2 id="transfer">Transferring Files</h2>
 
   <p>
-    Use <code>rsync</code> (or <code>scp</code>) from your own computer to copy files to and from the
-    cluster. Both work with the SSH alias defined above. <code>rsync</code> only transfers what changed,
-    and can resume interrupted transfers, so prefer it for datasets.
+    From your own computer, use <code>rsync</code> (or <code>scp</code>) with the alias above.
+    <code>rsync</code> copies only what changed and resumes interrupted transfers: prefer it for datasets.
   </p>
 
   <CodeBlock
@@ -199,12 +195,9 @@ tar -xzf dataset.tar.gz -C ~/dataset/private/`}
   <h2 id="tmux">Tmux — Persistent Terminal Sessions</h2>
 
   <p>
-    If your SSH connection drops (because of a network hiccup, a laptop going to sleep, or a VPN
-    timeout), anything running directly in your terminal is killed. <strong>Batch jobs submitted with
-    <code>sbatch</code> are not affected</strong>: they run on the compute nodes regardless of your
-    connection. tmux is still useful on the login node to keep an <strong>interactive</strong>
-    <code>srun</code> session, a long <code>rsync</code>, or your editor open across disconnections.
-    Detach, close your laptop, and reattach later to find everything exactly as you left it.
+    When your SSH connection drops, whatever runs in your terminal is killed.
+    <strong>Batch jobs are not affected</strong>, but an interactive <code>srun</code> session or a long
+    <code>rsync</code> is. tmux keeps them alive: detach, close your laptop, reattach later.
   </p>
 
   <p>

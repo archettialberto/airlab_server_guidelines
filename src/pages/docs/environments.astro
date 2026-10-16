@@ -18,19 +18,16 @@ const toc = [
   <h1>Software & Conda</h1>
 
   <p>
-    Every project needs its own isolated, reproducible software environment, so that your
-    dependencies never interfere with anyone else's, and so that anyone (you six months from now,
-    your co-supervisor, a future lab member) can rebuild it from scratch. On polimi-cluster, system
-    software is provided through <strong>environment modules</strong>, and Python environments are
-    managed with <strong>Conda</strong>.
+    Every project needs its own isolated, reproducible environment that anyone can rebuild from
+    scratch. System software comes from <strong>environment modules</strong>; Python environments
+    are managed with <strong>Conda</strong>.
   </p>
 
   <!-- ── Modules ──────────────────────────────────────────────────────────── -->
   <h2 id="modules">Environment Modules</h2>
 
   <p>
-    Modules make software available to your shell on demand. List what is installed, then load what
-    you need:
+    Modules make software available on demand:
   </p>
 
   <CodeBlock
@@ -50,9 +47,8 @@ module list                     # show what is currently loaded`}
   <h2 id="create">Creating an Environment</h2>
 
   <p>
-    Installing packages can use considerable CPU, RAM, disk I/O, and network bandwidth, so do not do
-    it on the login node. Create Conda environments as Slurm jobs instead. Create
-    <code>create-conda-env.sbatch</code>:
+    Installing packages is heavy on CPU, disk, and network: do it as a Slurm job, not on the
+    login node.
   </p>
 
   <CodeBlock
@@ -82,8 +78,7 @@ conda create --yes --name my-project python=3.11`}
   />
 
   <p>
-    Use the same pattern to install or update packages. For example, append these lines to the
-    script to install your project's dependencies into the new environment:
+    Use the same pattern to install or update packages, e.g. by appending:
   </p>
 
   <CodeBlock
@@ -97,7 +92,7 @@ pip install -r requirements.txt`}
   <h2 id="activate">Using It in Jobs</h2>
 
   <p>
-    Activate the environment in every Slurm script that needs it, before running your code:
+    Activate the environment in every Slurm script that needs it:
   </p>
 
   <CodeBlock
@@ -149,8 +144,7 @@ python train.py`}
   <h2 id="structure">Project Structure</h2>
 
   <p>
-    Every project should follow a layout like this one. It makes your repository self-contained:
-    anyone who clones it can rebuild the environment and run the code without asking you anything.
+    A self-contained layout: anyone who clones it can rebuild the environment and run the code.
   </p>
 
   <CodeBlock

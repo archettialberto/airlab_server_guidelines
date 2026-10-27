@@ -124,7 +124,7 @@ const sameFilename = linuxFilename === windowsFilename;
     });
   }
 
-  // Initialise from stored preference
+  // Initialize from stored preference
   applyOS(localStorage.getItem(OS_KEY) ?? 'linux');
 
   document.addEventListener('click', async (e) => {

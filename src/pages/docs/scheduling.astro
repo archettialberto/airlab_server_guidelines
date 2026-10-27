@@ -6,6 +6,8 @@ const base = import.meta.env.BASE_URL;
 
 const toc = [
   { label: 'Scheduling Order',   id: 'order' },
+  { label: 'GPU Placement',      id: 'placement' },
+  { label: 'Preemption',         id: 'preemption' },
   { label: 'Priority Score',     id: 'score' },
   { label: 'Billing & Usage',    id: 'billing' },
   { label: 'Fair-Share',         id: 'fairshare' },
@@ -20,8 +22,9 @@ const toc = [
   <h1>Scheduling Policy</h1>
 
   <p>
-    This page details how Slurm orders jobs on polimi-cluster. For the practical summary
-    (which queue to use and when), see <a href={`${base}docs/slurm#queues`}>Choosing a Queue</a>.
+    This page details how Slurm places and orders jobs on polimi-cluster. For the practical summary,
+    see <a href={`${base}docs/slurm#queues`}>Choosing a Queue</a> and
+    <a href={`${base}docs/slurm#rules`}>Submission Rules</a>.
   </p>
 
   <!-- ── Order ────────────────────────────────────────────────────────────── -->
@@ -36,13 +39,13 @@ const toc = [
 
   <table>
     <thead>
-      <tr><th>Partition</th><th>Tier</th><th>Preemptible</th></tr>
+      <tr><th>Partition</th><th>Tier</th></tr>
     </thead>
     <tbody>
-      <tr><td><code>debug</code></td><td>300</td><td>no</td></tr>
-      <tr><td><code>normal</code></td><td>200</td><td>no</td></tr>
-      <tr><td><code>cpu</code></td><td>150</td><td>no</td></tr>
-      <tr><td><code>bulk</code></td><td>50</td><td>yes, by <code>debug</code> / <code>normal</code> jobs</td></tr>
+      <tr><td><code>debug</code></td><td>300</td></tr>
+      <tr><td><code>normal</code></td><td>200</td></tr>
+      <tr><td><code>cpu</code></td><td>150</td></tr>
+      <tr><td><code>bulk</code></td><td>50</td></tr>
     </tbody>
   </table>
 
@@ -51,6 +54,63 @@ const toc = [
     without delaying higher-priority jobs, which is why a realistic <code>--time</code> pays off.
     Preemption and reservations also affect start times.
   </p>
+
+  <!-- ── Placement ────────────────────────────────────────────────────────── -->
+  <h2 id="placement">GPU Placement</h2>
+
+  <p>
+    The VRAM declaration (<code>--comment=vram=…</code>, per GPU) sets the smallest model that fits,
+    based on each card's usable capacity:
+  </p>
+
+  <table>
+    <thead>
+      <tr><th>Declared VRAM per GPU</th><th>Smallest fitting model</th><th>Model name</th><th>GPUs per node</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>1 – 23034 MiB</td><td>NVIDIA L4</td><td><code>l4</code></td><td>8</td></tr>
+      <tr><td>23035 – 24576 MiB</td><td>Quadro RTX 6000</td><td><code>quadro_rtx_6000</code></td><td>8</td></tr>
+      <tr><td>24577 – 49140 MiB</td><td>NVIDIA RTX A6000</td><td><code>nvidia_rtx_a6000</code></td><td>6</td></tr>
+      <tr><td>49141 – 97887 MiB</td><td>NVIDIA RTX PRO 6000</td><td><code>rtx_pro_6000</code></td><td>6</td></tr>
+    </tbody>
+  </table>
+
+  <p>
+    Examples: <code>vram=24G</code> selects a Quadro RTX 6000, <code>vram=48G</code> needs an
+    RTX PRO 6000, and <code>vram=96G</code> exceeds every card.
+  </p>
+
+  <p>
+    How each queue uses these models is described in <a href={`${base}docs/slurm#gpu`}>GPU Jobs</a>
+    and <a href={`${base}docs/slurm#bulk`}>Long Jobs on bulk</a>.
+  </p>
+
+  <!-- ── Preemption ───────────────────────────────────────────────────────── -->
+  <h2 id="preemption">Preemption</h2>
+
+  <p>
+    Only <code>bulk</code> jobs are preempted. A preempted job is requeued and its script runs again
+    from the beginning.
+  </p>
+
+  <table>
+    <thead>
+      <tr><th>A pending job in…</th><th>can preempt a running <code>bulk</code> job?</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>normal</code></td><td>✓ Always, also when the <code>bulk</code> job is on the model it needs</td></tr>
+      <tr><td><code>debug</code></td><td>✓ Always, as above</td></tr>
+      <tr><td><code>bulk</code></td><td>✓ Only if it needs a larger model than the running job, that job is borrowing it, and the pending job has a higher score</td></tr>
+      <tr><td><code>cpu</code></td><td>✗ CPU jobs are outside GPU preemption</td></tr>
+    </tbody>
+  </table>
+
+  <ul>
+    <li>Running <code>normal</code> and <code>debug</code> jobs are never preempted by this policy. <code>debug</code> waits for running <code>normal</code> jobs.</li>
+    <li>Between <code>bulk</code> jobs, the account type gives a preference, but fair-share and waiting time can outweigh it. A larger VRAM request alone does not guarantee preemption.</li>
+    <li>A request for a specific model counts as needing that model, even with a small VRAM declaration.</li>
+    <li><code>bulk</code> jobs are made requeueable automatically. On <code>normal</code>, <code>--requeue</code> / <code>--no-requeue</code> still control restarts after other events, such as node failures.</li>
+  </ul>
 
   <!-- ── Score ────────────────────────────────────────────────────────────── -->
   <h2 id="score">Priority Score</h2>
@@ -111,10 +171,9 @@ decay   = usage recorded d days ago keeps 2^(−d/7) of its weight`}
   </table>
 
   <p>
-    A GPU is billed with both the generic and the type weight: a Quadro RTX 6000 in
-    <code>bulk</code> counts <code>16 + 4 = 20</code>. Usage halves after 7 days and is a quarter
-    after 14; it never resets all at once. It is recalculated every 5 minutes, including for
-    running jobs.
+    A GPU is billed with both the generic and the model weight: a Quadro RTX 6000 in
+    <code>bulk</code> counts <code>16 + 4 = 20</code>. Usage halves after 7 days and drops to a quarter after 14; it
+    never resets all at once. It is recalculated every 5 minutes, including for running jobs.
   </p>
 
   <!-- ── Fair-share ───────────────────────────────────────────────────────── -->
@@ -182,6 +241,11 @@ FairShare = rank / N      users ranked by LevelFS, account first, then user (bes
   <!-- ── Limits ───────────────────────────────────────────────────────────── -->
   <h2 id="limits">Limits</h2>
 
+  <p>
+    All limits are per user and per partition, and shared across all GPU models. A limit of
+    "–" means no explicit cap: available resources and the other limits still apply.
+  </p>
+
   <h3>Maximum runtime</h3>
 
   <table>
@@ -196,38 +260,45 @@ FairShare = rank / N      users ranked by LevelFS, account first, then user (bes
     </tbody>
   </table>
 
-  <h3>Per-user limits, per partition</h3>
-
-  <p>
-    Format: <strong>running jobs / running + pending jobs / GPUs in use</strong>. "–" means no limit;
-    available resources still apply.
-  </p>
+  <h3>Jobs: running / running + pending</h3>
 
   <table>
     <thead>
       <tr><th>Partition</th><th>PhD</th><th>MSc</th><th>External</th></tr>
     </thead>
     <tbody>
-      <tr><td><code>debug</code></td><td>1 / – / 1</td><td>1 / 5 / 1</td><td>1 / 5 / 1</td></tr>
-      <tr><td><code>normal</code></td><td>– / – / 3</td><td>1 / 10 / 1</td><td>1 / 20 / 3</td></tr>
-      <tr><td><code>cpu</code></td><td>– / – / no GPUs</td><td>4 / 30 / no GPUs</td><td>10 / 100 / no GPUs</td></tr>
-      <tr><td><code>bulk</code></td><td>– / – / 8</td><td>2 / 20 / 8</td><td>20 / 200 / 8</td></tr>
+      <tr><td><code>debug</code></td><td>1 / –</td><td>1 / 5</td><td>1 / 5</td></tr>
+      <tr><td><code>normal</code></td><td>– / –</td><td>1 / 10</td><td>1 / 20</td></tr>
+      <tr><td><code>bulk</code></td><td>– / –</td><td>– / 20</td><td>20 / 200</td></tr>
+      <tr><td><code>cpu</code></td><td>– / –</td><td>4 / 30</td><td>10 / 100</td></tr>
     </tbody>
   </table>
 
   <p>
-    Limits apply separately in each partition: an MSc user can run two <code>bulk</code> jobs and,
-    at the same time, one <code>normal</code> job. Over the running limit, extra jobs wait; over the
-    submission limit, they are rejected.
+    Over the running limit, extra jobs wait; over the running + pending limit, new submissions are
+    rejected. Each array task counts as one job.
   </p>
 
-  <h3>Submission rules</h3>
+  <h3>GPUs in use at once</h3>
 
-  <ul>
-    <li>At most <strong>16 CPUs and 48 GB of RAM per GPU</strong>.</li>
-    <li>Interactive jobs only on <code>debug</code> and <code>cpu</code>.</li>
-    <li>No GPUs on <code>cpu</code>.</li>
-  </ul>
+  <table>
+    <thead>
+      <tr><th>Partition</th><th>PhD</th><th>MSc</th><th>External</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>debug</code></td><td>1</td><td>1</td><td>1</td></tr>
+      <tr><td><code>normal</code></td><td>3</td><td>1</td><td>3</td></tr>
+      <tr><td><code>bulk</code></td><td>–</td><td>8</td><td>8</td></tr>
+      <tr><td><code>cpu</code></td><td colspan="3">GPU requests not allowed</td></tr>
+    </tbody>
+  </table>
+
+  <p>
+    GPU limits are shared by all your running jobs in the same partition, whatever the model. For
+    example, a PhD user on <code>normal</code> can run three one-GPU jobs, or one two-GPU job plus
+    one one-GPU job, but never four GPUs at once. Limits apply separately per partition: an MSc user
+    can use a GPU on <code>normal</code> and up to eight on <code>bulk</code> at the same time.
+  </p>
 
   <!-- ── Check ────────────────────────────────────────────────────────────── -->
   <h2 id="check">Check Your Values</h2>

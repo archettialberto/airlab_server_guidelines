@@ -1,19 +1,26 @@
 ---
+import fs from 'node:fs';
+import path from 'node:path';
 import DocsLayout from '../../layouts/DocsLayout.astro';
 import CodeBlock from '../../components/CodeBlock.astro';
 
 const base = import.meta.env.BASE_URL;
 
+// Example scripts are served from public/examples/ and shown verbatim on this page
+const example = (name: string) =>
+  fs.readFileSync(path.join(process.cwd(), 'public/examples', name), 'utf8').trimEnd();
+const normalJob = example('normal_one_gpu.sbatch');
+const bulkJob   = example('bulk_two_gpu.sbatch');
+
 const toc = [
-  { label: 'Slurm in a Nutshell',   id: 'concepts' },
+  { label: 'Writing a Job',         id: 'job' },
   { label: 'Choosing a Queue',      id: 'queues' },
-  { label: 'Interactive Jobs',      id: 'interactive' },
-  { label: 'Batch Jobs',            id: 'batch' },
   { label: 'GPU Jobs',              id: 'gpu' },
+  { label: 'Interactive Jobs',      id: 'interactive' },
   { label: 'Long Jobs on bulk',     id: 'bulk' },
-  { label: 'Job Notifications',     id: 'notifications' },
-  { label: 'Essential Commands',    id: 'commands' },
-  { label: 'Resource Monitoring',   id: 'monitoring' },
+  { label: 'Job Arrays',            id: 'arrays' },
+  { label: 'Submission Rules',      id: 'rules' },
+  { label: 'Monitoring Your Jobs',  id: 'monitoring' },
   { label: 'Troubleshooting',       id: 'troubleshooting' },
 ];
 
@@ -27,27 +34,46 @@ const flow = [
 
 // Queue cards. prio = scheduling tier (4 = considered first)
 const queues = [
-  { name: 'debug',  icon: '🧪', use: 'Tests & debugging',          prio: 4, time: '2 h PhD · 1 h MSc/Ext', gpus: '1',                    cost: 'low',  interactive: true,  preempt: false },
-  { name: 'normal', icon: '🚀', use: 'Standard production',        prio: 3, time: '24 h',                  gpus: 'PhD 3 · MSc 1 · Ext 3', cost: 'high', interactive: false, preempt: false },
-  { name: 'cpu',    icon: '🖥️', use: 'CPU-only work',              prio: 2, time: '5 d PhD · 24 h MSc/Ext', gpus: 'none',                cost: 'CPU only', interactive: true,  preempt: false },
-  { name: 'bulk',   icon: '🐢', use: 'Long, restartable jobs',     prio: 1, time: '5 days',                gpus: '8',                     cost: 'low',  interactive: false, preempt: true  },
+  { name: 'debug',  icon: '🧪', prio: 4, time: '2 h PhD · 1 h MSc/Ext',  gpus: '1',                      place: 'Any GPU that fits',                     preempt: false },
+  { name: 'normal', icon: '🚀', prio: 3, time: '24 h',                   gpus: 'PhD 3 · MSc 1 · Ext 3',  place: 'Smallest GPU that fits, else it waits', preempt: false },
+  { name: 'cpu',    icon: '🖥️', prio: 2, time: '5 d PhD · 24 h MSc/Ext', gpus: 'none',                   place: '–',                                     preempt: false },
+  { name: 'bulk',   icon: '🐢', prio: 1, time: '5 days',                 gpus: 'MSc/Ext 8 · PhD no cap', place: 'Smallest that fits, may borrow larger', preempt: true  },
+];
+
+// Declared VRAM per GPU → GPU model chosen automatically
+const vramTiers = [
+  { vram: 'up to 22G', gpu: 'NVIDIA L4',                  name: 'l4',               node: 'caladan',   max: 8 },
+  { vram: '23G – 24G', gpu: 'Quadro RTX 6000',            name: 'quadro_rtx_6000',  node: 'magrathea', max: 8 },
+  { vram: '25G – 47G', gpu: 'NVIDIA RTX A6000',           name: 'nvidia_rtx_a6000', node: 'akira',     max: 6 },
+  { vram: '48G – 95G', gpu: 'NVIDIA RTX PRO 6000',        name: 'rtx_pro_6000',     node: 'arrakis',   max: 6 },
 ];
 
 // Fair-share cost per GPU-hour (generic + type billing weight), normal vs debug/bulk
 const gpuCost = [
-  { gpu: 'L4',                    normal: 25, low: 20 },
-  { gpu: 'Quadro RTX 6000',       normal: 25, low: 20 },
-  { gpu: 'RTX A6000',             normal: 35, low: 28 },
-  { gpu: 'RTX PRO 6000 Blackwell', normal: 60, low: 48 },
+  { gpu: 'L4',              normal: 25, low: 20 },
+  { gpu: 'Quadro RTX 6000', normal: 25, low: 20 },
+  { gpu: 'RTX A6000',       normal: 35, low: 28 },
+  { gpu: 'RTX PRO 6000',    normal: 60, low: 48 },
 ];
 
+// Submission rules: allowed vs rejected
 const rules = [
-  { icon: '⏱️', t: 'Realistic run time',   d: 'Short jobs slip into free gaps (backfilling) and start sooner.' },
-  { icon: '📏', t: 'Only what you use',  d: 'Allocated CPUs and GPUs count against your fair-share, even when idle.' },
-  { icon: '🎯', t: 'Smallest GPU that fits', d: 'A PRO 6000 costs 2.4× the fair-share of an L4.' },
-  { icon: '⚖️', t: 'Per GPU, at most',   d: '16 CPUs and 48 GB of RAM.' },
-  { icon: '💾', t: 'Checkpoint bulk jobs', d: 'They can be preempted and restart from the beginning.' },
-  { icon: '🔄', t: 'Usage fades',        d: 'Recorded usage halves every 7 days.' },
+  { ok: '<code>--gres=gpu:N</code>, <code>--gres=gpu:MODEL:N</code>, or <code>--gpus-per-node</code>',
+    no: '<code>--gpus</code>, <code>--gpus-per-task</code>, <code>--gpus-per-socket</code>, mixed GPU lists' },
+  { ok: '<code>--comment=vram=…</code> on every GPU job, and nothing else in the comment',
+    no: 'GPU jobs without a VRAM declaration; decimal values such as <code>1.5G</code>' },
+  { ok: 'One node',
+    no: 'Multi-node and heterogeneous jobs, also for CPU-only work' },
+  { ok: '<code>--ntasks</code> + <code>--cpus-per-task</code>, or <code>--cpus-per-gpu</code>',
+    no: 'Task-per-socket, -core, -board, or -GPU layouts' },
+  { ok: 'One of <code>--mem</code>, <code>--mem-per-cpu</code> (at most 4000M), <code>--mem-per-gpu</code>',
+    no: '<code>--mem=0</code> on GPU jobs; several memory options together' },
+  { ok: 'A specific GPU model through <code>--gres</code>',
+    no: '<code>--constraint</code> on GPU jobs; <code>--prefer</code>' },
+  { ok: 'Up to 16 CPUs and 48G of RAM per GPU',
+    no: 'More CPUs or RAM per GPU' },
+  { ok: 'The CPUs, RAM, and GPUs you need',
+    no: '<code>--exclusive</code> (all variants), <code>--core-spec</code>, <code>--thread-spec</code>' },
 ];
 ---
 
@@ -60,21 +86,41 @@ const rules = [
     you need, Slurm queues the request and starts the job on a compute node when they are free.
   </p>
 
-  <!-- ── Concepts ──────────────────────────────────────────────────────────── -->
-  <h2 id="concepts">Slurm in a Nutshell</h2>
+  <!-- ── Job ──────────────────────────────────────────────────────────────── -->
+  <h2 id="job">Writing a Job</h2>
+
+  <p>
+    A batch job is a script whose <code>#SBATCH</code> lines declare the resources. It keeps running
+    after you log out.
+  </p>
 
   <table>
     <thead>
       <tr><th>You declare</th><th>Option</th><th>Note</th></tr>
     </thead>
     <tbody>
-      <tr><td><strong>Queue</strong> (partition)</td><td class="whitespace-nowrap"><code>--partition=normal</code></td><td>See <a href="#queues">Choosing a Queue</a></td></tr>
-      <tr><td><strong>Max runtime</strong></td><td class="whitespace-nowrap"><code>--time=04:00:00</code></td><td>The job is stopped when it runs out</td></tr>
-      <tr><td><strong>CPUs</strong></td><td class="whitespace-nowrap"><code>--cpus-per-task=8</code></td><td></td></tr>
-      <tr><td><strong>Memory</strong></td><td class="whitespace-nowrap"><code>--mem=32G</code></td><td>Exceed it and the job is killed</td></tr>
-      <tr><td><strong>GPUs</strong></td><td class="whitespace-nowrap"><code>--gres=gpu:1</code></td><td>See <a href="#gpu">GPU Jobs</a></td></tr>
+      <tr><td><strong>Queue</strong> (partition)</td><td class="whitespace-nowrap"><code>--partition=normal</code></td><td><code>normal</code> if omitted. See <a href="#queues">Choosing a Queue</a></td></tr>
+      <tr><td><strong>Max runtime</strong></td><td class="whitespace-nowrap"><code>--time=04:00:00</code></td><td>The job is stopped when it runs out. Shorter jobs fit into free gaps (backfilling) and start sooner</td></tr>
+      <tr><td><strong>Nodes</strong></td><td class="whitespace-nowrap"><code>--nodes=1</code></td><td>Every job runs on a single node</td></tr>
+      <tr><td><strong>CPUs</strong></td><td class="whitespace-nowrap"><code>--ntasks=1 --cpus-per-task=4</code></td><td></td></tr>
+      <tr><td><strong>RAM</strong></td><td class="whitespace-nowrap"><code>--mem=8G</code></td><td>Host memory. Exceed it and the job is killed</td></tr>
+      <tr><td><strong>GPUs</strong></td><td class="whitespace-nowrap"><code>--gres=gpu:1</code></td><td rowspan="2">See <a href="#gpu">GPU Jobs</a></td></tr>
+      <tr><td><strong>VRAM per GPU</strong></td><td class="whitespace-nowrap"><code>--comment=vram=10G</code></td></tr>
     </tbody>
   </table>
+
+  <p>
+    Start from a template: add your environment setup where the comment says (see
+    <a href={`${base}docs/environments#activate`}>Software &amp; Conda</a>) and replace the program.
+  </p>
+
+  <CodeBlock lang="bash" filename="normal_one_gpu.sbatch" code={normalJob} />
+
+  <p>
+    Download <a href={`${base}examples/normal_one_gpu.sbatch`} download>normal_one_gpu.sbatch</a>,
+    or <a href={`${base}examples/cpu.sbatch`} download>cpu.sbatch</a> for CPU-only work (no
+    <code>--gres</code>, no VRAM declaration). Submit with <code>sbatch normal_one_gpu.sbatch</code>.
+  </p>
 
   <!-- ── Queues ────────────────────────────────────────────────────────────── -->
   <h2 id="queues">Choosing a Queue</h2>
@@ -82,7 +128,7 @@ const rules = [
   <h3>First match wins</h3>
 
   <div class="not-prose my-5 space-y-2">
-    {flow.map((f, i) => (
+    {flow.map((f) => (
       <div class="flex items-center gap-3 rounded-lg border border-gray-200 px-4 py-3">
         <span class="text-xl w-7 text-center flex-shrink-0" aria-hidden="true">{f.icon}</span>
         <span class="flex-1 text-sm text-gray-700">{f.q}</span>
@@ -92,15 +138,12 @@ const rules = [
     ))}
   </div>
 
-  <h3>The four queues at a glance</h3>
-
   <div class="not-prose my-5 grid sm:grid-cols-2 gap-4">
     {queues.map((q) => (
       <div class="rounded-xl border border-gray-200 overflow-hidden">
         <div class="flex items-center gap-2 px-4 py-2.5 bg-accent-50 border-b border-gray-200">
           <span class="text-lg" aria-hidden="true">{q.icon}</span>
           <code class="font-mono font-bold text-accent-800">{q.name}</code>
-          <span class="ml-auto text-xs text-gray-500">{q.use}</span>
         </div>
         <div class="grid grid-cols-[auto,1fr] gap-x-4 gap-y-1.5 px-4 py-3 text-sm text-gray-700">
           <span class="text-gray-400">Priority</span>
@@ -111,224 +154,297 @@ const rules = [
           </span>
           <span class="text-gray-400">Max time</span><span>{q.time}</span>
           <span class="text-gray-400">GPUs at once</span><span>{q.gpus}</span>
-          <span class="text-gray-400">Fair-share cost</span>
-          <span>{q.cost === 'high' ? '▲ higher' : q.cost === 'low' ? '▼ lower' : q.cost}</span>
-          <span class="text-gray-400">Interactive</span><span>{q.interactive ? '✓' : '✗ batch only'}</span>
+          <span class="text-gray-400">GPU placement</span><span>{q.place}</span>
           <span class="text-gray-400">Preemptible</span>
-          <span>{q.preempt ? <strong class="text-yellow-700">⚠ yes, checkpoint!</strong> : 'no'}</span>
+          <span>{q.preempt ? <a href="#bulk" class="font-semibold text-yellow-700">⚠ yes, checkpoint!</a> : 'no'}</span>
         </div>
       </div>
     ))}
   </div>
 
-  <div class="callout callout-success">
-    <svg class="w-5 h-5 flex-shrink-0 mt-0.5 text-green-500" fill="none" stroke="currentColor"
-         stroke-width="2" viewBox="0 0 24 24">
-      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-      <polyline points="22 4 12 14.01 9 11.01"/>
-    </svg>
-    <div class="text-sm leading-relaxed">
-      <strong>Use <code>debug</code> for tests.</strong> It has the highest priority and costs less
-      fair-share than <code>normal</code>.
-    </div>
-  </div>
+  <p>
+    <strong>Use <code>debug</code> for tests:</strong> it is considered first, can use any GPU that
+    fits, and costs less fair-share than <code>normal</code>. A quick start is still not guaranteed:
+    running <code>normal</code> or <code>debug</code> jobs, or busy CPUs and RAM on the node, can delay it.
+  </p>
 
-  <h3>How your priority works</h3>
+  <h3>Priority and fair-share</h3>
 
-  <div class="not-prose my-5 flex flex-col sm:flex-row sm:items-center gap-2 text-sm">
+  <p>
+    When several jobs wait for the same resources, Slurm starts the one with the highest priority
+    first. Your recent usage lowers the priority of your next jobs:
+  </p>
+
+  <div class="not-prose my-5 flex flex-wrap items-center gap-2 text-sm">
     {['🧾 Resources × time × queue', '📈 Usage ↑', '⚖️ Fair-share ↓', '⏳ Next jobs wait longer'].map((step, i) => (
-      <>
-        {i > 0 && (
-          <span class="text-gray-300 text-center" aria-hidden="true">
-            <span class="sm:hidden">↓</span><span class="hidden sm:inline">→</span>
-          </span>
-        )}
-        <span class="rounded-lg border border-gray-200 px-3 py-2 whitespace-nowrap">{step}</span>
-      </>
+      <span class="rounded-lg border border-gray-200 px-3 py-2 whitespace-nowrap">
+        {i > 0 && <span class="text-gray-400 mr-1.5" aria-hidden="true">→</span>}{step}
+      </span>
     ))}
   </div>
 
-  <ul>
-    <li>Slurm considers queues in order: <code>debug</code> ▸ <code>normal</code> ▸ <code>cpu</code> ▸ <code>bulk</code>.</li>
-    <li>Within a queue, jobs are ranked by a <strong>score</strong>: your account type, your <strong>fair-share</strong>, and how long the job has waited.</li>
-    <li>Fair-share drops as you use the cluster and recovers over time. Usage is accounting only, not money.</li>
-  </ul>
+  <p>
+    Queues are considered in order <code>debug</code> ▸ <code>normal</code> ▸ <code>cpu</code> ▸ <code>bulk</code>. Within a queue, a score ranks jobs by account type, fair-share, and waiting time.</li>
+    Allocated CPUs and GPUs count as usage even when idle. Recorded usage halves every 7 days.</li>
+  </p>
 
-  <h3>Rules of thumb</h3>
-
-  <div class="not-prose my-5 grid sm:grid-cols-2 gap-3">
-    {rules.map((r) => (
-      <div class="flex gap-3 rounded-lg border border-gray-200 px-4 py-3">
-        <span class="text-xl flex-shrink-0" aria-hidden="true">{r.icon}</span>
-        <div class="text-sm">
-          <div class="font-semibold text-gray-900">{r.t}</div>
-          <div class="text-gray-600">{r.d}</div>
+  <div class="not-prose my-5 text-sm">
+    <div class="font-semibold text-gray-900">Fair-share cost of one GPU-hour</div>
+    <div class="flex items-center gap-4 mt-1 mb-3">
+      <span class="flex items-center gap-1.5 text-xs text-gray-500">
+        <span class="inline-block w-3 h-2.5 rounded-sm bg-accent-800"></span>normal
+      </span>
+      <span class="flex items-center gap-1.5 text-xs text-gray-500">
+        <span class="inline-block w-3 h-2.5 rounded-sm bg-accent-400"></span>debug / bulk
+      </span>
+    </div>
+    <div class="space-y-2.5">
+      {gpuCost.map((g) => (
+        <div class="grid grid-cols-[7.5rem,1fr] sm:grid-cols-[10rem,1fr] items-center gap-3">
+          <span class="text-gray-700">{g.gpu}</span>
+          <div class="space-y-1">
+            {[['bg-accent-800', g.normal], ['bg-accent-400', g.low]].map(([color, value]) => (
+              <div class="flex items-center gap-2">
+                <span class:list={['h-2.5 rounded-sm', color]} style={`width: ${(Number(value) / 60) * 80}%`}></span>
+                <span class="text-xs tabular-nums text-gray-500">{value}</span>
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
-    ))}
+      ))}
+    </div>
+    <div class="text-xs text-gray-500 mt-3">For comparison, 16 CPUs cost about 5 per hour.</div>
   </div>
 
   <p>
-    Exact formulas, weights, and per-account limits are in
-    <a href={`${base}docs/scheduling`}>Scheduling Policy</a>.
-  </p>
-
-  <!-- ── Interactive ──────────────────────────────────────────────────────── -->
-  <h2 id="interactive">Interactive Jobs</h2>
-
-  <p>
-    An interactive allocation gives you a shell on a compute node, for testing and debugging.
-    It is allowed on <code>debug</code> and <code>cpu</code> only.
-  </p>
-
-  <CodeBlock
-    lang="bash"
-    filename="polimi-cluster"
-    code={`srun --partition=debug --time=00:10:00 --cpus-per-task=1 --mem=2G --pty bash
-
-hostname; nproc; free -h    # you are now on a compute node
-exit                        # release the allocation as soon as you are done`}
-  />
-
-  <p>
-    The session dies if your SSH connection drops: run it inside <a href={`${base}docs/shell#tmux`}>tmux</a>
-    if needed. An idle allocation still blocks its resources.
-  </p>
-
-  <!-- ── Batch ────────────────────────────────────────────────────────────── -->
-  <h2 id="batch">Batch Jobs</h2>
-
-  <p>
-    Real work runs as batch jobs: a script whose <code>#SBATCH</code> lines declare the resources.
-    It keeps running after you log out.
-  </p>
-
-  <CodeBlock
-    lang="bash"
-    filename="hello.sbatch"
-    code={`#!/bin/bash
-#SBATCH --job-name=hello
-#SBATCH --partition=debug
-#SBATCH --time=00:05:00
-#SBATCH --cpus-per-task=1
-#SBATCH --mem=1G
-#SBATCH --output=hello-%j.out    # %j = job ID
-#SBATCH --error=hello-%j.err
-
-hostname
-date`}
-  />
-
-  <CodeBlock
-    lang="bash"
-    filename="polimi-cluster"
-    code={`sbatch hello.sbatch     # prints: Submitted batch job JOBID
-squeue --me             # check its status
-cat hello-JOBID.out     # read the output when it is done`}
-  />
-
-  <p>
-    For CPU-only work, use <code>--partition=cpu</code> and no <code>--gres</code>. Start small,
-    check the actual usage with <code>sacct</code>, then adjust.
+    Formulas, weights, and per-account limits: <a href={`${base}docs/scheduling`}>Scheduling Policy</a>.
   </p>
 
   <!-- ── GPU ──────────────────────────────────────────────────────────────── -->
   <h2 id="gpu">GPU Jobs</h2>
 
   <p>
-    Request GPUs with <code>--gres=gpu:N</code>: Slurm assigns them and makes only those visible to
-    your job. Never set <code>CUDA_VISIBLE_DEVICES</code> yourself.
+    A GPU request has two parts: how many GPUs (<code>--gres=gpu:1</code>) and how much
+    <strong>VRAM each GPU needs</strong> (<code>--comment=vram=10G</code>). The VRAM declaration is
+    required and decides which GPU model you get.
   </p>
 
-  <CodeBlock
-    lang="bash"
-    filename="gpu-train.sbatch"
-    code={`#!/bin/bash
-#SBATCH --job-name=gpu-train
-#SBATCH --partition=normal
-#SBATCH --time=08:00:00
-#SBATCH --cpus-per-task=4
-#SBATCH --mem=16G
-#SBATCH --gres=gpu:1
-#SBATCH --output=gpu-train-%j.out
-#SBATCH --error=gpu-train-%j.err
+  <ul>
+    <li>Declare your program's real <strong>peak</strong>. A larger value moves the job to a larger model, which costs more fair-share. The declaration does not resize the GPU or reserve part of it.</li>
+    <li>Use whole numbers with <code>G</code> or <code>M</code>, where <code>1G = 1024M</code>: <code>vram=1536M</code>, not <code>vram=1.5G</code>.</li>
+    <li>VRAM and host RAM (<code>--mem</code>) are separate: declare both.</li>
+  </ul>
 
-module load miniconda/25.5.1
-conda activate my-project      # see Software & Conda
-
-nvidia-smi                     # logs which GPU the job received
-python train.py`}
-  />
+  <div class="not-prose my-5 space-y-2">
+    {vramTiers.map((t) => (
+      <div class="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border border-gray-200 px-4 py-3 text-sm">
+        <code class="w-24 flex-shrink-0 font-mono font-bold text-accent-800">{t.vram}</code>
+        <span class="text-gray-300" aria-hidden="true">→</span>
+        <span class="flex-1 min-w-[10rem] font-semibold text-gray-900">{t.gpu}</span>
+        <span class="text-xs text-gray-500">{t.node} · up to {t.max} per job</span>
+      </div>
+    ))}
+  </div>
 
   <p>
-    To ask for a specific GPU model, add its type: <code>--gres=gpu:TYPE:1</code>. List the
-    available types with:
+    The ranges follow each card's usable memory: <code>vram=48G</code> needs an RTX PRO 6000, and
+    <code>vram=96G</code> fits no GPU. Near a boundary, declare the value in <code>M</code>
+    (<a href={`${base}docs/scheduling#placement`}>exact limits</a>).
+    On <code>normal</code>, the job runs only on the smallest model that fits and waits while that
+    model is busy, even if larger GPUs are free. Every role can use every model.
+  </p>
+
+  <h3>A specific model</h3>
+
+  <p>
+    For benchmarks or hardware-specific experiments, name the model in <code>--gres</code>: the job
+    stays on that model, and the VRAM declaration must still fit it. Names: <code>l4</code>,
+    <code>quadro_rtx_6000</code>, <code>nvidia_rtx_a6000</code>, <code>rtx_pro_6000</code>.
   </p>
 
   <CodeBlock
     lang="bash"
     filename="polimi-cluster"
-    code={`sinfo -o "%15N %G"     # node name and its GPU types, e.g. gpu:quadro_rtx_6000:8`}
+    code={`sbatch --partition=normal --gres=gpu:nvidia_rtx_a6000:1 --comment=vram=40G job.sh`}
+  />
+
+  <h3>Several GPUs</h3>
+
+  <p>
+    With <code>--gres=gpu:2</code>, the VRAM declaration applies to <strong>each</strong> GPU, and all
+    GPUs must be on the same node. Check that your code uses them all, e.g. with
+    <code>torch.cuda.device_count()</code>. Never set <code>CUDA_VISIBLE_DEVICES</code>: Slurm makes
+    only your GPUs visible to the job.
+  </p>
+
+  <!-- ── Interactive ──────────────────────────────────────────────────────── -->
+  <h2 id="interactive">Interactive Jobs</h2>
+
+  <p>
+    Interactive jobs are allowed on <code>debug</code> and <code>cpu</code> only. <code>salloc</code>
+    reserves the resources; commands you prefix with <code>srun</code> then run on the allocated node.
+  </p>
+
+  <CodeBlock
+    lang="bash"
+    filename="polimi-cluster"
+    code={`salloc --partition=debug --nodes=1 --gres=gpu:1 \\
+       --comment=vram=10G --ntasks=1 --cpus-per-task=4 \\
+       --mem=8G --time=00:30:00
+
+srun python debug_experiment.py    # runs on the allocated node
+exit                               # release the allocation`}
   />
 
   <p>
-    With several GPUs (<code>--gres=gpu:2</code>), check that your code really uses them all,
-    e.g. <code>torch.cuda.device_count()</code>.
+    For CPU work, use <code>-p cpu</code> without <code>--gres</code> and <code>--comment</code>.
+    The session ends if your SSH connection drops (use <a href={`${base}docs/shell#tmux`}>tmux</a>),
+    and an idle session still holds its resources: <code>exit</code> as soon as you are done.
   </p>
 
   <!-- ── Bulk ─────────────────────────────────────────────────────────────── -->
   <h2 id="bulk">Long Jobs on bulk</h2>
 
   <p>
-    A <code>bulk</code> job can be <strong>preempted</strong> by <code>debug</code> or
-    <code>normal</code> jobs: it is stopped, put back in the queue, and later restarted
-    <strong>from the beginning of the script</strong>. Your code must save checkpoints and resume from the latest one.
+    A <code>bulk</code> job can borrow a larger GPU than it needs while that GPU is free. In exchange,
+    it can be <strong>preempted</strong>:
+  </p>
+
+  <div class="not-prose my-5 flex flex-col sm:flex-row sm:items-stretch gap-2 text-sm">
+    {[
+      '🐢 Your bulk job needs 10G and runs on a free A6000',
+      '🚀 A normal or debug job needs that A6000',
+      '⏸️ Your job is preempted and requeued',
+      '🔁 It restarts from the first line of the script',
+    ].map((step, i) => (
+      <>
+        {i > 0 && (
+          <span class="text-gray-300 text-center self-center" aria-hidden="true">
+            <span class="sm:hidden">↓</span><span class="hidden sm:inline">→</span>
+          </span>
+        )}
+        <span class="flex-1 rounded-lg border border-gray-200 px-3 py-2">{step}</span>
+      </>
+    ))}
+  </div>
+
+  <p>
+    <code>normal</code> and <code>debug</code> jobs can preempt any <code>bulk</code> job, and
+    <code>bulk</code> jobs can take back a larger GPU from each other
+    (<a href={`${base}docs/scheduling#preemption`}>full rules</a>). <code>bulk</code> jobs are always
+    requeueable: <code>--no-requeue</code> is rejected.
+  </p>
+
+  <div class="callout callout-danger">
+    <svg class="w-5 h-5 flex-shrink-0 mt-0.5 text-red-500" fill="none" stroke="currentColor"
+         stroke-width="2" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="10"/>
+      <line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
+    </svg>
+    <div class="text-sm leading-relaxed">
+      <strong>A requeued job does not resume your program.</strong> Slurm runs the script again from
+      the beginning, possibly with little warning. Save checkpoints regularly and atomically, resume
+      from the latest complete one on every start, and handle existing output files without
+      duplicating or overwriting good results.
+    </div>
+  </div>
+
+  <CodeBlock lang="bash" filename="bulk_two_gpu.sbatch" code={bulkJob} />
+
+  <p>
+    Download <a href={`${base}examples/bulk_two_gpu.sbatch`} download>bulk_two_gpu.sbatch</a>. With
+    40G per GPU, it prefers two A6000s on akira and may borrow two RTX PRO 6000s on arrakis.
+    <code>SLURM_RESTART_COUNT</code> counts the restarts, but decide whether to resume from the
+    checkpoint files themselves.
+  </p>
+
+  <!-- ── Arrays ───────────────────────────────────────────────────────────── -->
+  <h2 id="arrays">Job Arrays</h2>
+
+  <p>
+    An array submits the same script many times, for example one task per input file. Use
+    <code>$SLURM_ARRAY_TASK_ID</code> in your program to pick distinct inputs and output paths.
   </p>
 
   <CodeBlock
     lang="bash"
-    filename="long-train.sbatch"
-    code={`#!/bin/bash
-#SBATCH --job-name=long-train
-#SBATCH --partition=bulk
-#SBATCH --time=3-00:00:00         # 3 days
-#SBATCH --cpus-per-task=8
-#SBATCH --mem=32G
-#SBATCH --gres=gpu:1
-#SBATCH --output=long-train-%j.out
-
-module load miniconda/25.5.1
-conda activate my-project
-
-# train.py must load checkpoints/last.pt when it exists
-python train.py --resume checkpoints/last.pt`}
+    filename="polimi-cluster"
+    code={`sbatch --array=0-9%2 normal_one_gpu.sbatch    # 10 tasks, at most 2 running at once`}
   />
 
-  <!-- ── Notifications ────────────────────────────────────────────────────── -->
-  <h2 id="notifications">Job Notifications</h2>
-
   <p>
-    Slurm can notify you when your job ends or fails. Add two lines to your script, choosing
-    where the notification goes:
+    Each task counts against your job and GPU limits, and <code>%2</code> cannot raise them: on
+    <code>normal</code>, MSc and external users still run one task at a time.
   </p>
 
-  <CodeBlock
-    lang="bash"
-    filename="Discord direct message"
-    code={`#SBATCH --mail-user=discord     # write "discord" literally
-#SBATCH --mail-type=END,FAIL`}
-  />
+  <!-- ── Rules ────────────────────────────────────────────────────────────── -->
+  <h2 id="rules">Submission Rules</h2>
+
+  <p>
+    Every submission is checked, and requests that break these rules are rejected with an
+    explanation. QoS is assigned automatically: do not set it.
+  </p>
+
+  <table class="[&_code]:whitespace-nowrap">
+    <thead>
+      <tr><th>✓ Allowed</th><th>✗ Rejected</th></tr>
+    </thead>
+    <tbody>
+      {rules.map((r) => (
+        <tr><td set:html={r.ok} /><td set:html={r.no} /></tr>
+      ))}
+    </tbody>
+  </table>
+
+  <p>
+    <strong>To change a submitted job</strong> (resources, VRAM, GPU model, queue, account, or requeue
+    setting), cancel it and submit it again. <code>scontrol update</code> still works for the job name,
+    mail settings, holds and releases, and authorized time-limit changes.
+  </p>
+
+  <!-- ── Monitoring ───────────────────────────────────────────────────────── -->
+  <h2 id="monitoring">Monitoring Your Jobs</h2>
+
+  <table>
+    <thead>
+      <tr><th>Command</th><th>What it does</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>squeue --me</code></td><td>Your queued and running jobs, with the reason a job is pending</td></tr>
+      <tr><td><code>scancel JOBID</code></td><td>Cancel a job</td></tr>
+      <tr><td><code>scontrol show job JOBID</code></td><td>Full details of a job</td></tr>
+      <tr><td><code>sacct -j JOBID</code></td><td>Review a finished job</td></tr>
+      <tr><td><code>sprio -l -u $USER</code></td><td>Priority factors of your pending jobs (not a start time)</td></tr>
+      <tr><td><code>sinfo</code></td><td>Nodes and queues, and their state</td></tr>
+    </tbody>
+  </table>
+
+  <p>
+    <code>bulk</code> jobs may appear as <code>bulk_base</code>, <code>bulk_msc</code>, or
+    <code>bulk_external</code>: internal partitions that share the same GPUs and limits. Submit to
+    <code>bulk</code>, and do not filter <code>squeue</code> with <code>-p bulk</code>, which hides them.
+  </p>
+
+  <h3>Usage dashboards</h3>
+
+  <p>
+    <strong>Grafana</strong> shows live and historical usage of nodes, CPUs, memory, and GPUs. Open
+    <a href="http://10.75.4.86:3000" target="_blank" rel="noopener"><code>http://10.75.4.86:3000</code></a>
+    (VPN or AIRLab network) and log in with your cluster username and password. Use it, together
+    with <code>sacct</code>, to check that your jobs use what they request, then adjust.
+  </p>
+
+  <h3>Notifications</h3>
 
   <CodeBlock
     lang="bash"
-    filename="Email"
-    code={`#SBATCH --mail-user=name.surname@polimi.it
+    code={`#SBATCH --mail-user=discord     # write "discord" literally, or your email address
 #SBATCH --mail-type=END,FAIL`}
   />
 
   <p>
-    With <code>discord</code>, you do not need to enter your Discord ID: the cluster already knows it
-    from your enrollment and sends the message to you.
+    With <code>discord</code>, you get a direct message on Discord without entering your ID: the
+    cluster knows it from your enrollment.
   </p>
 
   <table>
@@ -337,52 +453,11 @@ python train.py --resume checkpoints/last.pt`}
     </thead>
     <tbody>
       <tr><td><code>BEGIN</code> / <code>END</code> / <code>FAIL</code></td><td>the job starts / finishes / fails</td></tr>
-      <tr><td><code>REQUEUE</code></td><td>the job is requeued (e.g., after preemption on <code>bulk</code>)</td></tr>
+      <tr><td><code>REQUEUE</code></td><td>the job is requeued, e.g., after preemption on <code>bulk</code>. <code>BEGIN</code> and <code>END</code> do not cover this</td></tr>
       <tr><td><code>TIME_LIMIT_80</code></td><td>the job reaches 80% of its time limit (also <code>_50</code>, <code>_90</code>)</td></tr>
       <tr><td><code>ALL</code></td><td>all of the above events</td></tr>
     </tbody>
   </table>
-
-  <!-- ── Commands ─────────────────────────────────────────────────────────── -->
-  <h2 id="commands">Essential Commands</h2>
-
-  <table>
-    <thead>
-      <tr><th>Command</th><th>What it does</th></tr>
-    </thead>
-    <tbody>
-      <tr><td><code>sinfo</code></td><td>Nodes and queues, and their state</td></tr>
-      <tr><td><code>squeue --me</code></td><td>Your queued and running jobs</td></tr>
-      <tr><td><code>sbatch script.sbatch</code></td><td>Submit a batch job</td></tr>
-      <tr><td><code>scancel JOBID</code></td><td>Cancel a job</td></tr>
-      <tr><td><code>scontrol show job JOBID</code></td><td>Full details of a job</td></tr>
-      <tr><td><code>sacct -j JOBID</code></td><td>Review a finished job</td></tr>
-      <tr><td><code>sprio -l -u $USER</code></td><td>Why your pending jobs have their priority</td></tr>
-    </tbody>
-  </table>
-
-  <CodeBlock
-    lang="bash"
-    filename="polimi-cluster"
-    code={`# How much of the requested resources a finished job actually used
-sacct -j JOBID --format=JobID,JobName,State,Elapsed,AllocCPUS,ReqMem,ExitCode`}
-  />
-
-  <!-- ── Monitoring ───────────────────────────────────────────────────────── -->
-  <h2 id="monitoring">Resource Monitoring</h2>
-
-  <p>
-    The cluster's <strong>Grafana</strong> dashboards show live and historical usage of nodes, CPUs,
-    memory, and GPUs. Open
-    <a href="http://10.75.4.86:3000" target="_blank" rel="noopener"><code>http://10.75.4.86:3000</code></a>
-    in your browser (VPN or AIRLab network required) and log in with your <strong>cluster username and
-    password</strong>.
-  </p>
-
-  <p>
-    Use it to check whether your jobs actually use the GPUs and memory you requested,
-    and how busy the cluster is before you submit.
-  </p>
 
   <!-- ── Troubleshooting ──────────────────────────────────────────────────── -->
   <h2 id="troubleshooting">Troubleshooting</h2>
@@ -392,13 +467,15 @@ sacct -j JOBID --format=JobID,JobName,State,Elapsed,AllocCPUS,ReqMem,ExitCode`}
       <tr><th>Problem</th><th>First checks</th></tr>
     </thead>
     <tbody>
-      <tr><td>Job is pending</td><td><code>squeue --me</code>: read the <code>REASON</code> column. Check queue, limits, and requested resources.</td></tr>
-      <tr><td>Job disappeared or failed</td><td>Read the <code>*.err</code> / <code>*.out</code> files and run <code>sacct -j JOBID</code>.</td></tr>
+      <tr><td>Submission rejected</td><td>Read the message, then check <a href="#rules">Submission Rules</a>.</td></tr>
+      <tr><td>Maintenance message</td><td>New submissions are closed for now. Retry when the service reopens.</td></tr>
+      <tr><td>Job is pending</td><td>Read the reason in <code>squeue --me</code>: <code>Resources</code> (no fitting GPU free), <code>Priority</code> (others first), <code>Dependency</code>, <code>JobArrayTaskLimit</code>, or a QoS limit. Free GPU memory alone does not mean your job can start.</td></tr>
+      <tr><td><code>normal</code> job waits while larger GPUs are free</td><td>Expected (<a href="#gpu">GPU Jobs</a>). Check that your VRAM declaration is not larger than needed.</td></tr>
+      <tr><td>Job failed</td><td>Read the <code>*.out</code> / <code>*.err</code> files and run <code>sacct -j JOBID</code>.</td></tr>
       <tr><td>Out of memory</td><td>Request more <code>--mem</code>, or reduce the program's memory use.</td></tr>
-      <tr><td><code>bulk</code> job started over</td><td>It was preempted: resume from a checkpoint (<a href="#bulk">see above</a>).</td></tr>
-      <tr><td>No GPU visible</td><td>Check <code>#SBATCH --gres=gpu:N</code> and run <code>nvidia-smi</code> inside the job.</td></tr>
+      <tr><td><code>bulk</code> job started over</td><td>It was preempted (<a href="#bulk">Long Jobs on bulk</a>).</td></tr>
+      <tr><td>No GPU visible</td><td>Check <code>--gres=gpu:N</code> and run <code>nvidia-smi</code> inside the job.</td></tr>
       <tr><td>Works on the login node, not in a job</td><td>Load the same modules and Conda environment in the script.</td></tr>
-      <tr><td>Cannot connect through VPN</td><td>Use <code>10.75.4.86</code> instead of the hostname.</td></tr>
     </tbody>
   </table>
 

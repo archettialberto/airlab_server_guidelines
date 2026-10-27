@@ -42,15 +42,15 @@ ssh-keygen -t ed25519
 # 2. Install the public key on the cluster
 ssh-copy-id USERNAME@10.75.4.86
 
-# 3. Test key login — no password prompt means it worked
+# 3. Test key login: no password prompt means it worked
 ssh USERNAME@10.75.4.86`}
     windowsCode={`# 1. Generate a key pair (Ed25519 is the modern standard)
 ssh-keygen -t ed25519
 
-# 2. Windows does not have ssh-copy-id — pipe the public key over SSH instead
+# 2. Windows has no ssh-copy-id: pipe the public key over SSH instead
 type $env:USERPROFILE\\.ssh\\id_ed25519.pub | ssh USERNAME@10.75.4.86 "mkdir -p ~/.ssh && cat >> ~/.ssh/authorized_keys"
 
-# 3. Test key login — no password prompt means it worked
+# 3. Test key login: no password prompt means it worked
 ssh USERNAME@10.75.4.86`}
   />
 
@@ -192,7 +192,7 @@ tar -xzf dataset.tar.gz -C ~/dataset/private/`}
   />
 
   <!-- ── tmux ───────────────────────────────────────────────────────────────── -->
-  <h2 id="tmux">Tmux — Persistent Terminal Sessions</h2>
+  <h2 id="tmux">Tmux: Persistent Terminal Sessions</h2>
 
   <p>
     When your SSH connection drops, whatever runs in your terminal is killed.
@@ -211,13 +211,13 @@ tar -xzf dataset.tar.gz -C ~/dataset/private/`}
   <CodeBlock
     lang="bash"
     filename="polimi-cluster"
-    code={`# Create a named session (use a meaningful name — your project or task)
+    code={`# Create a named session (name it after your project or task)
 tmux new -s debug_session
 
-# Inside the session, start an interactive allocation as normal
-srun --partition=debug --time=01:00:00 --cpus-per-task=2 --mem=4G --pty bash
+# Inside the session, start an interactive allocation as usual
+salloc --partition=debug --nodes=1 --ntasks=1 --cpus-per-task=2 --mem=4G --time=01:00:00
 
-# Detach — the session (and the allocation) keeps running
+# Detach: the session and the allocation keep running
 # Press: Ctrl-b  then  d
 
 # Later, reattach from any SSH session

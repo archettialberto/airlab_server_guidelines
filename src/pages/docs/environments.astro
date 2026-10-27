@@ -38,11 +38,6 @@ module load miniconda/25.5.1    # load the cluster's Conda installation
 module list                     # show what is currently loaded`}
   />
 
-  <p>
-    Loaded modules only apply to the current shell. A Slurm job starts from a fresh environment,
-    so <strong>every script must load the modules it needs</strong>.
-  </p>
-
   <!-- ── Create ───────────────────────────────────────────────────────────── -->
   <h2 id="create">Creating an Environment</h2>
 
@@ -68,17 +63,8 @@ conda create --yes --name my-project python=3.11`}
   />
 
   <p>
-    Submit it, and check the log once it finishes:
-  </p>
-
-  <CodeBlock
-    lang="bash"
-    filename="polimi-cluster"
-    code={`sbatch create-conda-env.sbatch`}
-  />
-
-  <p>
-    Use the same pattern to install or update packages, e.g. by appending:
+    Submit it with <code>sbatch create-conda-env.sbatch</code> and check the log when it finishes.
+    Use the same script to install or update packages, e.g. by appending:
   </p>
 
   <CodeBlock
@@ -92,7 +78,8 @@ pip install -r requirements.txt`}
   <h2 id="activate">Using It in Jobs</h2>
 
   <p>
-    Activate the environment in every Slurm script that needs it:
+    A job starts from a fresh shell: <strong>every script must load the module and activate the
+    environment</strong> before running your code.
   </p>
 
   <CodeBlock

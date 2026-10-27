@@ -1,5 +1,6 @@
 .idea
 .vscode
+.claude
 res/polimi-brand
 
 # Created by https://www.toptal.com/developers/gitignore/api/python,jupyternotebooks,visualstudiocode,pycharm+all,node,astro

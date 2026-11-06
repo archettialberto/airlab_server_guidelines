@@ -103,7 +103,7 @@ const rules = [
       <tr><td><strong>Max runtime</strong></td><td class="whitespace-nowrap"><code>--time=04:00:00</code></td><td>The job is stopped when it runs out. Shorter jobs fit into free gaps (backfilling) and start sooner</td></tr>
       <tr><td><strong>Nodes</strong></td><td class="whitespace-nowrap"><code>--nodes=1</code></td><td>Every job runs on a single node</td></tr>
       <tr><td><strong>CPUs</strong></td><td class="whitespace-nowrap"><code>--ntasks=1 --cpus-per-task=4</code></td><td></td></tr>
-      <tr><td><strong>RAM</strong></td><td class="whitespace-nowrap"><code>--mem=8G</code></td><td>Host memory. Exceed it and the job is killed</td></tr>
+      <tr><td><strong>RAM</strong></td><td class="whitespace-nowrap"><code>--mem=8G</code></td><td>Host memory. Start from e.g. 16G per GPU and increase it only if needed. Exceed it and the job is killed</td></tr>
       <tr><td><strong>GPUs</strong></td><td class="whitespace-nowrap"><code>--gres=gpu:1</code></td><td rowspan="2">See <a href="#gpu">GPU Jobs</a></td></tr>
       <tr><td><strong>VRAM per GPU</strong></td><td class="whitespace-nowrap"><code>--comment=vram=10G</code></td></tr>
     </tbody>

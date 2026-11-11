@@ -71,17 +71,14 @@ const toc = [
       <tr><td>1 – 23034 MiB</td><td>NVIDIA L4</td><td><code>l4</code></td><td>8</td></tr>
       <tr><td>23035 – 24576 MiB</td><td>Quadro RTX 6000</td><td><code>quadro_rtx_6000</code></td><td>8</td></tr>
       <tr><td>24577 – 49140 MiB</td><td>NVIDIA RTX A6000</td><td><code>nvidia_rtx_a6000</code></td><td>6</td></tr>
-      <tr><td>49141 – 97887 MiB</td><td>NVIDIA RTX PRO 6000</td><td><code>rtx_pro_6000</code></td><td>6</td></tr>
+      <tr><td>49141 – 97887 MiB</td><td>NVIDIA RTX PRO 6000 (<code>bulk</code> only)</td><td><code>rtx_pro_6000</code></td><td>6</td></tr>
     </tbody>
   </table>
 
   <p>
     Examples: <code>vram=24G</code> selects a Quadro RTX 6000, <code>vram=48G</code> needs an
-    RTX PRO 6000, and <code>vram=96G</code> exceeds every card.
-  </p>
-
-  <p>
-    How each queue uses these models is described in <a href={`${base}docs/slurm#gpu`}>GPU Jobs</a>
+    RTX PRO 6000 (so <code>bulk</code>), and <code>vram=96G</code> exceeds every card. How each queue
+    uses these models is described in <a href={`${base}docs/slurm#gpu`}>GPU Jobs</a>
     and <a href={`${base}docs/slurm#bulk`}>Long Jobs on bulk</a>.
   </p>
 
@@ -166,7 +163,7 @@ decay   = usage recorded d days ago keeps 2^(−d/7) of its weight`}
       <tr><td>Any GPU (generic)</td><td>16</td><td>20</td><td>not allowed</td></tr>
       <tr><td>+ L4 / Quadro RTX 6000</td><td>4</td><td>5</td><td>not allowed</td></tr>
       <tr><td>+ RTX A6000</td><td>12</td><td>15</td><td>not allowed</td></tr>
-      <tr><td>+ RTX PRO 6000</td><td>32</td><td>40</td><td>not allowed</td></tr>
+      <tr><td>+ RTX PRO 6000 (<code>bulk</code> only)</td><td>32</td><td>not allowed</td><td>not allowed</td></tr>
     </tbody>
   </table>
 

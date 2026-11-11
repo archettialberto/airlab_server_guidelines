@@ -28,14 +28,14 @@ const toc = [
 const flow = [
   { icon: '🧪', q: 'Testing, debugging, or a short interactive session?', p: 'debug' },
   { icon: '🖥️', q: 'No GPU needed (preprocessing, analysis, Conda)?',   p: 'cpu' },
-  { icon: '🐢', q: 'Long or not urgent, and able to resume from a checkpoint?', p: 'bulk' },
+  { icon: '🐢', q: 'Long, not urgent, or over 47G per GPU, and able to resume from a checkpoint?', p: 'bulk' },
   { icon: '🚀', q: 'Everything else: standard training and evaluation runs', p: 'normal' },
 ];
 
 // Queue cards. prio = scheduling tier (4 = considered first)
 const queues = [
-  { name: 'debug',  icon: '🧪', prio: 4, time: '2 h PhD · 1 h MSc/Ext',  gpus: '1',                      place: 'Any GPU that fits',                     preempt: false },
-  { name: 'normal', icon: '🚀', prio: 3, time: '24 h',                   gpus: 'PhD 3 · MSc 1 · Ext 3',  place: 'Smallest GPU that fits, else it waits', preempt: false },
+  { name: 'debug',  icon: '🧪', prio: 4, time: '2 h PhD · 1 h MSc/Ext',  gpus: '1',                      place: 'Any GPU that fits, except arrakis',     preempt: false },
+  { name: 'normal', icon: '🚀', prio: 3, time: '24 h',                   gpus: 'PhD 3 · MSc 1 · Ext 3',  place: 'Smallest that fits, except arrakis',    preempt: false },
   { name: 'cpu',    icon: '🖥️', prio: 2, time: '5 d PhD · 24 h MSc/Ext', gpus: 'none',                   place: '–',                                     preempt: false },
   { name: 'bulk',   icon: '🐢', prio: 1, time: '5 days',                 gpus: 'MSc/Ext 8 · PhD no cap', place: 'Smallest that fits, may borrow larger', preempt: true  },
 ];
@@ -45,7 +45,7 @@ const vramTiers = [
   { vram: 'up to 22G', gpu: 'NVIDIA L4',                  name: 'l4',               node: 'caladan',   max: 8 },
   { vram: '23G – 24G', gpu: 'Quadro RTX 6000',            name: 'quadro_rtx_6000',  node: 'magrathea', max: 8 },
   { vram: '25G – 47G', gpu: 'NVIDIA RTX A6000',           name: 'nvidia_rtx_a6000', node: 'akira',     max: 6 },
-  { vram: '48G – 95G', gpu: 'NVIDIA RTX PRO 6000',        name: 'rtx_pro_6000',     node: 'arrakis',   max: 6 },
+  { vram: '48G – 95G', gpu: 'NVIDIA RTX PRO 6000',        name: 'rtx_pro_6000',     node: 'arrakis',   max: 6, bulkOnly: true },
 ];
 
 // Fair-share cost per GPU-hour (generic + type billing weight), normal vs debug/bulk
@@ -53,7 +53,7 @@ const gpuCost = [
   { gpu: 'L4',              normal: 25, low: 20 },
   { gpu: 'Quadro RTX 6000', normal: 25, low: 20 },
   { gpu: 'RTX A6000',       normal: 35, low: 28 },
-  { gpu: 'RTX PRO 6000',    normal: 60, low: 48 },
+  { gpu: 'RTX PRO 6000',    normal: null, low: 48 },  // bulk only
 ];
 
 // Submission rules: allowed vs rejected
@@ -70,6 +70,8 @@ const rules = [
     no: '<code>--mem=0</code> on GPU jobs; several memory options together' },
   { ok: 'A specific GPU model through <code>--gres</code>',
     no: '<code>--constraint</code> on GPU jobs; <code>--prefer</code>' },
+  { ok: 'More than 47G per GPU, or <code>rtx_pro_6000</code>, on <code>bulk</code>',
+    no: 'The same on <code>debug</code> or <code>normal</code>' },
   { ok: 'Up to 16 CPUs and 48G of RAM per GPU',
     no: 'More CPUs or RAM per GPU' },
   { ok: 'The CPUs, RAM, and GPUs you need',
@@ -163,8 +165,8 @@ const rules = [
   </div>
 
   <p>
-    <strong>Use <code>debug</code> for tests:</strong> it is considered first, can use any GPU that
-    fits, and costs less fair-share than <code>normal</code>. A quick start is still not guaranteed:
+    <strong>Use <code>debug</code> for tests:</strong> it is considered first, can use any free GPU
+    that fits, and costs less fair-share than <code>normal</code>. A quick start is still not guaranteed:
     running <code>normal</code> or <code>debug</code> jobs, or busy CPUs and RAM on the node, can delay it.
   </p>
 
@@ -184,8 +186,8 @@ const rules = [
   </div>
 
   <p>
-    Queues are considered in order <code>debug</code> ▸ <code>normal</code> ▸ <code>cpu</code> ▸ <code>bulk</code>. Within a queue, a score ranks jobs by account type, fair-share, and waiting time.</li>
-    Allocated CPUs and GPUs count as usage even when idle. Recorded usage halves every 7 days.</li>
+    Queues are considered in order <code>debug</code> ▸ <code>normal</code> ▸ <code>cpu</code> ▸ <code>bulk</code>. Within a queue, a score ranks jobs by account type, fair-share, and waiting time.
+    Allocated CPUs and GPUs count as usage even when idle. Recorded usage halves every 7 days.
   </p>
 
   <div class="not-prose my-5 text-sm">
@@ -203,7 +205,7 @@ const rules = [
         <div class="grid grid-cols-[7.5rem,1fr] sm:grid-cols-[10rem,1fr] items-center gap-3">
           <span class="text-gray-700">{g.gpu}</span>
           <div class="space-y-1">
-            {[['bg-accent-800', g.normal], ['bg-accent-400', g.low]].map(([color, value]) => (
+            {[['bg-accent-800', g.normal], ['bg-accent-400', g.low]].filter(([, v]) => v != null).map(([color, value]) => (
               <div class="flex items-center gap-2">
                 <span class:list={['h-2.5 rounded-sm', color]} style={`width: ${(Number(value) / 60) * 80}%`}></span>
                 <span class="text-xs tabular-nums text-gray-500">{value}</span>
@@ -241,17 +243,16 @@ const rules = [
         <code class="w-24 flex-shrink-0 font-mono font-bold text-accent-800">{t.vram}</code>
         <span class="text-gray-300" aria-hidden="true">→</span>
         <span class="flex-1 min-w-[10rem] font-semibold text-gray-900">{t.gpu}</span>
-        <span class="text-xs text-gray-500">{t.node} · up to {t.max} per job</span>
+        <span class="text-xs text-gray-500">{t.node}{t.bulkOnly && ' · bulk only'} · up to {t.max} per job</span>
       </div>
     ))}
   </div>
 
   <p>
-    The ranges follow each card's usable memory: <code>vram=48G</code> needs an RTX PRO 6000, and
-    <code>vram=96G</code> fits no GPU. Near a boundary, declare the value in <code>M</code>
-    (<a href={`${base}docs/scheduling#placement`}>exact limits</a>).
-    On <code>normal</code>, the job runs only on the smallest model that fits and waits while that
-    model is busy, even if larger GPUs are free. Every role can use every model.
+    Near a boundary, declare the value in <code>M</code>
+    (<a href={`${base}docs/scheduling#placement`}>exact limits</a>). On <code>normal</code>, the job
+    runs only on the smallest model that fits and waits while that model is busy, even if larger GPUs
+    are free. RTX PRO 6000s are available only on <code>bulk</code>.
   </p>
 
   <h3>A specific model</h3>

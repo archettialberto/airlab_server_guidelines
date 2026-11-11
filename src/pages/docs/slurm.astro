@@ -354,7 +354,7 @@ exit                               # release the allocation`}
 
   <p>
     Download <a href={`${base}examples/bulk_two_gpu.sbatch`} download>bulk_two_gpu.sbatch</a>. With
-    40G per GPU, it prefers two A6000s on akira and may borrow two RTX PRO 6000s on arrakis.
+    12G per GPU, it prefers two L4s on caladan and may borrow larger GPUs while they are free.
     <code>SLURM_RESTART_COUNT</code> counts the restarts, but decide whether to resume from the
     checkpoint files themselves.
   </p>

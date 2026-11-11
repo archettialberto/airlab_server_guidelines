@@ -3,7 +3,7 @@
 #SBATCH --partition=bulk
 #SBATCH --nodes=1
 #SBATCH --gres=gpu:2
-#SBATCH --comment=vram=40G
+#SBATCH --comment=vram=12G
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=32G
